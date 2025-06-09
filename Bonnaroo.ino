@@ -42,6 +42,7 @@
 #include <IRremote.hpp>
 #include <MatrixHardware_Teensy4_ShieldV5.h>        // SmartLED Shield for Teensy 4 (V5)
 #include <SD.h>
+#include <SPI.h>
 #include <SmartMatrix.h>
 
 #include "FilenameFunctions.h"
@@ -49,9 +50,13 @@
 #define DISPLAY_TIME_SECONDS 10
 #define NUMBER_FULL_CYCLES   100
 
-// Teensy 4.0 using CS1
+// Teensy 4.0 using CS0.
+// If use_sd == false, SD is not read and colors stand in for images.
 #define SD_CS 0
-// If use_sd = False, then colors will be used instead for testing.
+#define SD_SCK 27
+#define SD_MOSI 26
+#define SD_MISO 1
+
 const bool use_sd = false;
 // Teensy 4.1 with builtin
 // #define SD_CS BUILTIN_SDCARD
@@ -63,18 +68,18 @@ const bool use_sd = false;
 #define IR_RECEIVE_PIN 16
 
 // range 0-255
-const int defaultBrightness = 255;
+static int brightness = 255;
 
 const rgb24 COLOR_BLACK = {
     0, 0, 0 };
 const rgb24 COLOR_WHITE = {
+    255, 255, 255 };
+const rgb24 COLOR_RED = {
     255, 0, 0 };
 const rgb24 COLOR_GREEN = {
     0, 255, 0 };
 const rgb24 COLOR_BLUE = {
     0, 0, 255 };
-const rgb24 COLOR_RED = {
-    255, 0, 255 };
 
 /* SmartMatrix configuration and memory allocation */
 #define COLOR_DEPTH 24                  // Choose the color depth used for storing pixels in the layers: 24 or 48 (24 is good for most sketches - If the sketch uses type `rgb24` directly, COLOR_DEPTH must be 24)
@@ -96,6 +101,10 @@ SMARTMATRIX_ALLOCATE_SCROLLING_LAYER(scrollingLayer, kMatrixWidth, kMatrixHeight
  * lzwMaxBits is included for backwards compatibility reasons, but isn't used anymore
  */
 GifDecoder<kMatrixWidth, kMatrixHeight, 12> decoder;
+
+Sd2Card card;
+SdVolume volume;
+SdFile root;
 
 int num_files;
 
@@ -158,7 +167,7 @@ int wrap_enumerateGIFFiles(const char *directoryName, bool displayFilenames) {
 #define BUT_8           0xE619BF00
 #define BUT_9           0xE51ABF00
 
-bool buttonToStr(IRRawDataType button, char* buf) {
+bool validatePressAndGetName(IRRawDataType button, char* buf) {
     switch(button) {
         case BUT_VOL_DOWN:
             strcat(buf, "VOL_DOWN");
@@ -230,6 +239,70 @@ bool buttonToStr(IRRawDataType button, char* buf) {
     return true;
 }
 
+void adjustBrightness(int amount) {
+    int next_brightness = brightness + amount;
+    if (amount < 0) {
+        brightness = max(0, next_brightness);
+    } else {
+        brightness = min(255, next_brightness);
+    }
+    matrix.setBrightness(brightness);
+}
+
+void HandleIRInputs(unsigned long now) {
+    char button_name[16];
+    button_name[0] = 0;
+    char debug_buf[300];
+    debug_buf[0] = 0;
+    scrollingLayer.setFont(font5x7);
+    static unsigned long lastAcceptedIRTimestamp = 0; // stored in millis
+
+    if (now - lastAcceptedIRTimestamp > 3000) {
+        // Clear debug screen if its been on for more than 3000 seconds and
+        // no recent valid input. debug_buf should be empty right now.
+        scrollingLayer.start(debug_buf, -1);
+    }
+
+    if (!IrReceiver.decode()) {
+        // Nothing received.
+        return;
+    }
+
+    IRRawDataType received_data = IrReceiver.decodedIRData.decodedRawData;
+    if (!validatePressAndGetName(received_data, button_name)){
+        // Throw out invalid input for invalid reads.
+        IrReceiver.resume(); // Receive the next value.
+        return;
+    }
+
+    if (lastAcceptedIRTimestamp > 0 && now - lastAcceptedIRTimestamp < 400) {
+        // Last valid input was too recent. Add a cooldown.
+        return;
+    }
+    lastAcceptedIRTimestamp = now;
+
+
+    switch(received_data) {
+        case BUT_VOL_DOWN:
+            adjustBrightness(-26);
+            strcat(debug_buf, "Brt: ");
+            strcat(debug_buf, String(brightness).c_str());
+            scrollingLayer.start(debug_buf, -1);
+            break;
+        case BUT_VOL_UP:
+            adjustBrightness(26);
+            strcat(debug_buf, "Brt: ");
+            strcat(debug_buf, String(brightness).c_str());
+            scrollingLayer.start(debug_buf, -1);
+            break;
+        default:
+            // Unhandled buttons just display name.
+            scrollingLayer.start(button_name, -1);
+            break;
+    }
+    IrReceiver.resume(); // Receive the next value
+}
+
 
 // Setup method runs once, when the sketch starts
 void setup() {
@@ -258,7 +331,7 @@ void setup() {
     matrix.addLayer(&backgroundLayer); 
     matrix.addLayer(&scrollingLayer);
 
-    matrix.setBrightness(defaultBrightness);
+    matrix.setBrightness(brightness);
 
 
     // for large panels, may want to set the refresh rate lower to leave more CPU time to decoding GIFs (needed if GIFs are playing back slowly)
@@ -267,7 +340,7 @@ void setup() {
 
 
     // Clear screen
-    backgroundLayer.fillScreen(COLOR_BLACK);
+    backgroundLayer.fillScreen(COLOR_RED);
     backgroundLayer.swapBuffers();
     scrollingLayer.setMode(stopped);
     scrollingLayer.setColor({0xff, 0xff, 0xff});
@@ -276,14 +349,16 @@ void setup() {
     // ----------------------------------------------
     // ---------- SD Card Setup  --------------------
     // ----------------------------------------------
-    if(wrap_initFileSystem(SD_CS) < 0) {
-        scrollingLayer.start("No SD card", -1);
-        Serial.println("No SD card");
-        while(1);
-    } else if (use_sd) {
-        scrollingLayer.start("SD Card found!", -1);
-    }
     if (use_sd) {
+        SPI1.setMOSI(SD_MOSI);
+        SPI1.setMISO(SD_MISO);
+        SPI1.setSCK(SD_SCK);
+        if(!card.init(SPI_HALF_SPEED, SD_CS)) {
+            scrollingLayer.start("No SD card", -1);
+            Serial.println("No SD card");
+            while(1);
+        }
+        scrollingLayer.start("SD Card found!", -1);
         while(1);
     }
 
@@ -327,19 +402,8 @@ void loop() {
     char str_buf[300];
     str_buf[0] = 0;
     scrollingLayer.setFont(font5x7);
-    if (IrReceiver.decode()) {
-        IRRawDataType received_data = IrReceiver.decodedIRData.decodedRawData;
-        // Noisy data that fails to interpret is received as 0. Filter out the
-        // erroneous results.
-        if (received_data != 0){
-            strcat(str_buf, "IR: ");
-            if (!buttonToStr(received_data, str_buf)) {
-                strcat(str_buf, String(received_data, HEX).c_str());
-            }
-            scrollingLayer.start(str_buf, -1);
-        }
-        IrReceiver.resume(); // Receive the next value
-    }
+
+    HandleIRInputs(now);
     // else if(nextGIF)  {
     //     nextGIF = 0;
 
