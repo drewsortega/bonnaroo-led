@@ -61,8 +61,9 @@ const bool use_sd = false;
 // Data pin the IR receiver is hooked up to.
 #define IR_RECEIVE_PIN 16
 
-// range 0-255
-static int brightness = 255;
+// range 0-255 technically, but battery drives less than that.
+const int max_brightness = 180;
+static int brightness = max_brightness;
 
 const rgb24 COLOR_BLACK = {
     0, 0, 0 };
@@ -162,6 +163,43 @@ int wrap_enumerateGIFFiles(const char *directoryName, bool displayFilenames) {
 #define BUT_8           0xE619BF00
 #define BUT_9           0xE51ABF00
 
+static unsigned long last_debug_write_time = 0; // stored in millis
+static bool allow_debug_clear = true;
+void maybeClearDebugScreen(unsigned long now) {
+    if (!allow_debug_clear) {
+        return;
+    }
+
+    // Only clear debug screen if its been on for more than 3000 seconds and
+    // no recent valid input. debug_buf should be empty right now.
+    if (!(last_debug_write_time > 0 && now - last_debug_write_time > 3000)) {
+        return;
+    }
+
+    indexedLayer.fillScreen(0);
+    indexedLayer.swapBuffers();
+    scrollingLayer.start("", -1);
+
+    last_debug_write_time = 0;
+}
+
+// Writes debug string text. If end == true, clears
+// debug text after a few seconds of no changes.
+void writeDebugScreen(char text[], unsigned long now, bool allow_clear = true) {
+    allow_debug_clear = allow_clear;
+    indexedLayer.fillScreen(0);
+    indexedLayer.setIndexedColor(1, COLOR_BLACK);
+    for(int row=0; row<12; row++) {
+        for(int col=0; col<(strlen(text) * 6) + 2; col++) {
+            indexedLayer.drawPixel(col,row,1);
+        }
+    }
+    indexedLayer.swapBuffers();
+    scrollingLayer.start(text, -1);
+
+    last_debug_write_time = now;
+}
+
 bool validatePressAndGetName(IRRawDataType button, char* buf) {
     switch(button) {
         case BUT_VOL_DOWN:
@@ -239,7 +277,7 @@ void adjustBrightness(int amount) {
     if (amount < 0) {
         brightness = max(0, next_brightness);
     } else {
-        brightness = min(255, next_brightness);
+        brightness = min(max_brightness, next_brightness);
     }
     matrix.setBrightness(brightness);
 }
@@ -264,14 +302,6 @@ void HandleIRInputs(unsigned long now) {
     char debug_buf[300];
     debug_buf[0] = 0;
     static unsigned long lastAcceptedIRTimestamp = 0; // stored in millis
-
-    if (now - lastAcceptedIRTimestamp > 3000) {
-        // Clear debug screen if its been on for more than 3000 seconds and
-        // no recent valid input. debug_buf should be empty right now.
-        scrollingLayer.start(debug_buf, -1);
-        indexedLayer.fillScreen(0);
-        indexedLayer.swapBuffers();
-    }
 
     if (!IrReceiver.decode()) {
         // Nothing received.
@@ -320,15 +350,7 @@ void HandleIRInputs(unsigned long now) {
             break;
     }
 
-    indexedLayer.fillScreen(0);
-    indexedLayer.setIndexedColor(1, COLOR_BLACK);
-    for(int row=0; row<12; row++) {
-        for(int col=0; col<(strlen(debug_buf) * 6) + 2; col++) {
-            indexedLayer.drawPixel(col,row,1);
-        }
-    }
-    indexedLayer.swapBuffers();
-    scrollingLayer.start(debug_buf, -1);
+    writeDebugScreen(debug_buf, now);
     IrReceiver.resume(); // Receive the next value
 }
 
@@ -338,16 +360,16 @@ void changeImageNoSD(int next_image_idx) {
             backgroundLayer.fillScreen(COLOR_BLACK);
             break;
         case 1:
-            backgroundLayer.fillScreen(COLOR_WHITE);
-            break;
-        case 2:
             backgroundLayer.fillScreen(COLOR_RED);
             break;
-        case 3:
+        case 2:
             backgroundLayer.fillScreen(COLOR_BLUE);
             break;
-        case 4:
+        case 3:
             backgroundLayer.fillScreen(COLOR_GREEN);
+            break;
+        case 4:
+            backgroundLayer.fillScreen(COLOR_WHITE);
             break;
         default:
             backgroundLayer.fillScreen(COLOR_BLACK);
@@ -359,6 +381,7 @@ void changeImageNoSD(int next_image_idx) {
 
 // Setup method runs once, when the sketch starts
 void setup() {
+    matrix.setRotation(rotation270);
     // ----------------------------------------------
     // ---------- GIF Decorder Setup ----------------
     // ----------------------------------------------
@@ -388,6 +411,7 @@ void setup() {
     matrix.setBrightness(brightness);
 
 
+
     // for large panels, may want to set the refresh rate lower to leave more CPU time to decoding GIFs (needed if GIFs are playing back slowly)
     //matrix.setRefreshRate(90);
     matrix.begin();
@@ -402,6 +426,8 @@ void setup() {
 
     // Set large font to read
     scrollingLayer.setFont(font6x10);
+
+    writeDebugScreen("POWER: ON", millis());
 
 
     // ----------------------------------------------
@@ -444,6 +470,8 @@ void setup() {
 
 void loop() {
     unsigned long now = millis();
+
+    maybeClearDebugScreen(now);
 
     HandleIRInputs(now);
 
