@@ -39,6 +39,12 @@
 #include <SPI.h>
 #include <SmartMatrix.h>
 
+#include "gimpbitmap.h"
+
+// Bitmaps!
+#include "bitmaps/bm_brat.c"
+#include "bitmaps/bm_surprised_pikachu.c"
+
 #include "FilenameFunctions.h"
 
 #define DISPLAY_TIME_SECONDS 10
@@ -61,9 +67,11 @@ const bool use_sd = false;
 // Data pin the IR receiver is hooked up to.
 #define IR_RECEIVE_PIN 16
 
-// range 0-255 technically, but battery drives less than that.
+// range 0-255 technically, but battery drives less than that. Stop it
+// at 180.
 const int max_brightness = 180;
-static int brightness = max_brightness;
+// Start at low brightness - 26.
+static int brightness = 26;
 
 const rgb24 COLOR_BLACK = {
     0, 0, 0 };
@@ -127,7 +135,7 @@ int wrap_enumerateGIFFiles(const char *directoryName, bool displayFilenames) {
     if (use_sd) {
         return wrap_enumerateGIFFiles(directoryName, displayFilenames);
     }
-    return 5;
+    return 4;
 }
 
 // Remote Layout:
@@ -354,22 +362,30 @@ void HandleIRInputs(unsigned long now) {
     IrReceiver.resume(); // Receive the next value
 }
 
+void drawBitmap64(int16_t x, int16_t y, const gimp64x64bitmap* bitmap) {
+  for(unsigned int i=0; i < bitmap->height; i++) {
+    for(unsigned int j=0; j < bitmap->width; j++) {
+      rgb24 pixel = { bitmap->pixel_data[(i*bitmap->width + j)*3 + 0],
+                      bitmap->pixel_data[(i*bitmap->width + j)*3 + 1],
+                      bitmap->pixel_data[(i*bitmap->width + j)*3 + 2] };
+      backgroundLayer.drawPixel(x + j, y + i, pixel);
+    }
+  }
+}
+
 void changeImageNoSD(int next_image_idx) {
     switch(next_image_idx) {
         case 0:
             backgroundLayer.fillScreen(COLOR_BLACK);
             break;
         case 1:
-            backgroundLayer.fillScreen(COLOR_RED);
+            drawBitmap64(0, 0, &bm_brat);
             break;
         case 2:
-            backgroundLayer.fillScreen(COLOR_BLUE);
+            drawBitmap64(0, 0, &bm_surprised_pikachu);
             break;
         case 3:
-            backgroundLayer.fillScreen(COLOR_GREEN);
-            break;
-        case 4:
-            backgroundLayer.fillScreen(COLOR_WHITE);
+            backgroundLayer.fillScreen(COLOR_RED);
             break;
         default:
             backgroundLayer.fillScreen(COLOR_BLACK);
