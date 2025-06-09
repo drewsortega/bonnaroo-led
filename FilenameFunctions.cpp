@@ -33,9 +33,18 @@ int fileSizeCallback(void) {
     return my_sd_file.size();
 }
 
-bool initSDCard(int chipSelectPin) {
-    if (!SD.sdfs.begin(SdSpiConfig(chipSelectPin, SHARED_SPI, SPI_HALF_SPEED, &SPI1)))
+bool initSDCard(int chipSelectPin, bool use_spi1) {
+    // Override and use SPI1 instead of default SPI.
+    if (use_spi1) {
+        if (!SD.sdfs.begin(SdSpiConfig(chipSelectPin, SHARED_SPI, SPI_HALF_SPEED, &SPI1))) {
+            return false;
+        }
+        return true;
+    }
+
+    if (!SD.begin(chipSelectPin)) {
         return false;
+    }
     return true;
 }
 
@@ -136,7 +145,7 @@ void getGIFFilenameByIndex(const char *directoryName, int index, char *pnBuffer)
     directory.close();
 }
 
-int openGifFilenameByIndex(const char *directoryName, int index) {
+bool openGifFilenameByIndex(const char *directoryName, int index) {
     char pathname[255];
 
     getGIFFilenameByIndex(directoryName, index, pathname);
@@ -151,10 +160,10 @@ int openGifFilenameByIndex(const char *directoryName, int index) {
     my_sd_file = SD.open(pathname);
     if (!my_sd_file) {
         Serial.println("Error opening GIF file");
-        return -1;
+        return false;
     }
 
-    return 0;
+    return true;
 }
 
 

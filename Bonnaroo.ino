@@ -59,13 +59,12 @@ const int gifsSizeList[] = { sizeof(bm_ariel_dance) };
 // Teensy 4.0 using CS0.
 // If use_sd == false, SD is not read and colors stand in for images.
 #define SD_CS 0
-#define SD_SCK 27
-#define SD_MOSI 26
-#define SD_MISO 1
-
-const bool use_sd = false;
 // Teensy 4.1 with builtin
 // #define SD_CS BUILTIN_SDCARD
+
+const bool use_sd = true;
+// The SmartMatrix takes up SPI0. Use SPI1 instead.
+const bool use_spi1 = true;
 
 // Teensy SD Library requires a trailing slash in the directory name
 #define GIF_DIRECTORY "/gifs/"
@@ -402,8 +401,6 @@ void displayGIFFromMemoryById(int id, unsigned long now) {
 }
 
 void drawImageNoSD(unsigned long now) {
-    // For GIFs
-
     switch(cur_image_idx) {
         case 0:
             backgroundLayer.fillScreen(COLOR_BLACK);
@@ -429,9 +426,39 @@ void drawImageNoSD(unsigned long now) {
 void drawImageWithSD(unsigned long now) {
     // For GIFs
     if (is_first_frame) {
-        openGifFilenameByIndex("/gifs", cur_image_idx);
+        if(!openGifFilenameByIndex("/gifs/", cur_image_idx)) {
+            writeDebugScreen("Fail", now);
+            Serial.println("Fail");
+        }
+        Serial.println(my_sd_file.name());
     }
-    writeDebugScreen(my_sd_file.name(), now);
+
+
+    // these variables keep track of when we're done displaying the last frame and are ready for a new frame
+    static uint32_t lastFrameDisplayTime = 0;
+    static unsigned int currentFrameDelay = 0;
+
+    // // Check if we should display the next frame on this cycle.
+    if ((now - lastFrameDisplayTime) > currentFrameDelay) {
+        if (is_first_frame) {
+            if(decoder.startDecoding() < 0) {
+                writeDebugScreen("Bad frame", now);
+                lastFrameDisplayTime = 0;
+            }
+        }
+        // decode frame without delaying after decode
+        int result = decoder.decodeFrame(false);
+
+        lastFrameDisplayTime = now;
+        currentFrameDelay = decoder.getFrameDelay_ms();
+
+        // it's time to start decoding a new GIF if there was an error, and don't wait to decode
+        if(result < 0) {
+            writeDebugScreen("Bad frame", now);
+            lastFrameDisplayTime = 0;
+            currentFrameDelay = 0;
+        }
+    }
 }
 
 
@@ -488,7 +515,7 @@ void setup() {
     // ---------- SD Card Setup  --------------------
     // ----------------------------------------------
     if (use_sd) {
-        if(!initSDCard(SD_CS)) {
+        if(!initSDCard(SD_CS, use_spi1)) {
             scrollingLayer.start("No SD card", -1);
             Serial.println("No SD card");
             while(1);
