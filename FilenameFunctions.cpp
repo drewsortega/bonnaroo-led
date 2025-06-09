@@ -9,39 +9,34 @@
 #include "FilenameFunctions.h"
 
 #include <SD.h>
-
-File file;
+#include <SPI.h>
 
 int numberOfFiles;
 
 bool fileSeekCallback(unsigned long position) {
-    return file.seek(position);
+    return my_sd_file.seek(position);
 }
 
 unsigned long filePositionCallback(void) {
-    return file.position();
+    return my_sd_file.position();
 }
 
 int fileReadCallback(void) {
-    return file.read();
+    return my_sd_file.read();
 }
 
 int fileReadBlockCallback(void * buffer, int numberOfBytes) {
-    return file.read((uint8_t*)buffer, numberOfBytes);
+    return my_sd_file.read((uint8_t*)buffer, numberOfBytes);
 }
 
 int fileSizeCallback(void) {
-    return file.size();
+    return my_sd_file.size();
 }
 
-int initFileSystem(int chipSelectPin) {
-    // initialize the SD card at full speed
-    if (chipSelectPin >= 0) {
-        pinMode(chipSelectPin, OUTPUT);
-    }
-    if (!SD.begin(chipSelectPin))
-        return -1;
-    return 0;
+bool initSDCard(int chipSelectPin) {
+    if (!SD.sdfs.begin(SdSpiConfig(chipSelectPin, SHARED_SPI, SPI_HALF_SPEED, &SPI1)))
+        return false;
+    return true;
 }
 
 bool isAnimationFile(const char filename []) {
@@ -113,10 +108,10 @@ void getGIFFilenameByIndex(const char *directoryName, int index, char *pnBuffer)
         return;
 
     while ((index >= 0)) {
-        file = directory.openNextFile();
-        if (!file) break;
+        my_sd_file = directory.openNextFile();
+        if (!my_sd_file) break;
 
-        if (isAnimationFile(file.name())) {
+        if (isAnimationFile(my_sd_file.name())) {
             index--;
 
             // Copy the directory name into the pathname buffer			
@@ -131,13 +126,13 @@ void getGIFFilenameByIndex(const char *directoryName, int index, char *pnBuffer)
 #endif
 
             // Append the filename to the pathname
-            strcat(pnBuffer, file.name());
+            strcat(pnBuffer, my_sd_file.name());
         }
 
-        file.close();
+        my_sd_file.close();
     }
 
-    file.close();
+    my_sd_file.close();
     directory.close();
 }
 
@@ -149,12 +144,12 @@ int openGifFilenameByIndex(const char *directoryName, int index) {
     Serial.print("Pathname: ");
     Serial.println(pathname);
 
-    if(file)
-        file.close();
+    if(my_sd_file)
+        my_sd_file.close();
 
     // Attempt to open the file for reading
-    file = SD.open(pathname);
-    if (!file) {
+    my_sd_file = SD.open(pathname);
+    if (!my_sd_file) {
         Serial.println("Error opening GIF file");
         return -1;
     }

@@ -32,6 +32,7 @@
  *    Use matrix.setMaxCalculationCpuPercentage() or matrix.setCalcRefreshRateDivider()
  */
 
+
 #include <GifDecoder.h>
 #include <IRremote.hpp>
 #include <MatrixHardware_Teensy4_ShieldV5.h>        // SmartLED Shield for Teensy 4 (V5)
@@ -41,9 +42,14 @@
 
 #include "gimpbitmap.h"
 
-// Bitmaps!
+// 64x64 image bitmaps.
 #include "bitmaps/bm_brat.c"
 #include "bitmaps/bm_surprised_pikachu.c"
+
+// GIF Bitmaps.
+#include "bitmaps/bm_ariel_dance.c"
+const uint8_t * gifsList[] = { bm_ariel_dance };
+const int gifsSizeList[] = { sizeof(bm_ariel_dance) };
 
 #include "FilenameFunctions.h"
 
@@ -107,9 +113,9 @@ SMARTMATRIX_ALLOCATE_INDEXED_LAYER(indexedLayer, kMatrixWidth, kMatrixHeight, CO
  */
 GifDecoder<kMatrixWidth, kMatrixHeight, 12> decoder;
 
-Sd2Card card;
-SdVolume volume;
-SdFile root;
+GIFIMAGE gif;
+int iGIFWidth, iGIFHeight;
+uint8_t *pGIFBuf;
 
 
 void screenClearCallback(void) {
@@ -124,16 +130,9 @@ void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t
     backgroundLayer.drawPixel(x, y, {red, green, blue});
 }
 
-int wrap_initFileSystem(int chipSelectPin) {
-    if (use_sd) {
-        return initFileSystem(chipSelectPin);
-    }
-    return 0;
-}
-
 int wrap_enumerateGIFFiles(const char *directoryName, bool displayFilenames) {
     if (use_sd) {
-        return wrap_enumerateGIFFiles(directoryName, displayFilenames);
+        return enumerateGIFFiles(directoryName, displayFilenames);
     }
     return 4;
 }
@@ -143,7 +142,7 @@ int wrap_enumerateGIFFiles(const char *directoryName, bool displayFilenames) {
 // BUT_VOL_DOWN     BUT_PLAY        BUT_VOL_UP
 // BUT_SETUP        BUT_UP          BUT_STOP
 // BUT_LEFT         BUT_ENTER       BUT_RIGHT
-// BUT_0            BUT_DOWN        BUT_BACK
+// BUT_0            BUT_DOWN        BUT_xBACK
 // BUT_1            BUT_2           BUT_3
 // BUT_4            BUT_5           BUT_6
 // BUT_7            BUT_8           BUT_9
@@ -197,8 +196,8 @@ void writeDebugScreen(char text[], unsigned long now, bool allow_clear = true) {
     allow_debug_clear = allow_clear;
     indexedLayer.fillScreen(0);
     indexedLayer.setIndexedColor(1, COLOR_BLACK);
-    for(int row=0; row<12; row++) {
-        for(int col=0; col<(strlen(text) * 6) + 2; col++) {
+    for(int row=0; row<8; row++) {
+        for(int col=0; col<(strlen(text) * 5)+1; col++) {
             indexedLayer.drawPixel(col,row,1);
         }
     }
@@ -292,16 +291,17 @@ void adjustBrightness(int amount) {
 
 int num_files = 0;
 static int cur_image_idx = 0;
-static int next_image_idx = 0;
-void requestChangeImageIdx(int amount) {
-    next_image_idx = cur_image_idx + amount;
+bool is_first_frame = true;
+void change_image_idx(int amount) {
+    cur_image_idx = cur_image_idx + amount;
 
     // Wrap around images on overflow.
-    if (next_image_idx < 0) {
-        next_image_idx = num_files - 1;
-    } else if (next_image_idx >= num_files) {
-        next_image_idx = 0;
+    if (cur_image_idx < 0) {
+        cur_image_idx = num_files - 1;
+    } else if (cur_image_idx >= num_files) {
+        cur_image_idx = 0;
     }
+    is_first_frame = true;
 }
 
 void HandleIRInputs(unsigned long now) {
@@ -342,14 +342,14 @@ void HandleIRInputs(unsigned long now) {
             strcat(debug_buf, String(brightness).c_str());
             break;
         case BUT_LEFT:
-            requestChangeImageIdx(-1);
+            change_image_idx(-1);
             strcat(debug_buf, "IMG: ");
-            strcat(debug_buf, String(next_image_idx).c_str());
+            strcat(debug_buf, String(cur_image_idx).c_str());
             break;
         case BUT_RIGHT:
-            requestChangeImageIdx(1);
+            change_image_idx(1);
             strcat(debug_buf, "IMG: ");
-            strcat(debug_buf, String(next_image_idx).c_str());
+            strcat(debug_buf, String(cur_image_idx).c_str());
             break;
         default:
             // Unhandled buttons just display name.
@@ -373,25 +373,65 @@ void drawBitmap64(int16_t x, int16_t y, const gimp64x64bitmap* bitmap) {
   }
 }
 
-void changeImageNoSD(int next_image_idx) {
-    switch(next_image_idx) {
+void displayGIFFromMemoryById(int id, unsigned long now) {
+    // these variables keep track of when we're done displaying the last frame and are ready for a new frame
+    static uint32_t lastFrameDisplayTime = 0;
+    static unsigned int currentFrameDelay = 0;
+
+    // Check if we should display the next frame on this cycle.
+    if ((now - lastFrameDisplayTime) > currentFrameDelay) {
+        if (is_first_frame) {
+            if(decoder.startDecoding((uint8_t *)gifsList[0], gifsSizeList[0]) < 0) {
+                writeDebugScreen("Bad frame", now);
+                lastFrameDisplayTime = 0;
+            }
+        }
+        // decode frame without delaying after decode
+        int result = decoder.decodeFrame(false);
+
+        lastFrameDisplayTime = now;
+        currentFrameDelay = decoder.getFrameDelay_ms();
+
+        // it's time to start decoding a new GIF if there was an error, and don't wait to decode
+        if(result < 0) {
+            writeDebugScreen("Bad frame", now);
+            lastFrameDisplayTime = 0;
+            currentFrameDelay = 0;
+        }
+    }
+}
+
+void drawImageNoSD(unsigned long now) {
+    // For GIFs
+
+    switch(cur_image_idx) {
         case 0:
             backgroundLayer.fillScreen(COLOR_BLACK);
+            backgroundLayer.swapBuffers();
             break;
         case 1:
             drawBitmap64(0, 0, &bm_brat);
+            backgroundLayer.swapBuffers();
             break;
         case 2:
             drawBitmap64(0, 0, &bm_surprised_pikachu);
+            backgroundLayer.swapBuffers();
             break;
         case 3:
-            backgroundLayer.fillScreen(COLOR_RED);
+            displayGIFFromMemoryById(0, now);
             break;
         default:
             backgroundLayer.fillScreen(COLOR_BLACK);
+            backgroundLayer.swapBuffers();
     }
-    backgroundLayer.swapBuffers();
-    cur_image_idx = next_image_idx;
+}
+
+void drawImageWithSD(unsigned long now) {
+    // For GIFs
+    if (is_first_frame) {
+        openGifFilenameByIndex("/gifs", cur_image_idx);
+    }
+    writeDebugScreen(my_sd_file.name(), now);
 }
 
 
@@ -418,8 +458,6 @@ void setup() {
     // give time for USB Serial to be ready
     delay(1000);
 
-    Serial.println("Starting AnimatedGIFs Sketch");
-
     matrix.addLayer(&backgroundLayer); 
     matrix.addLayer(&indexedLayer); 
     matrix.addLayer(&scrollingLayer);
@@ -434,47 +472,50 @@ void setup() {
 
 
     // Clear screen
-    // TODO(drewsortega): Change this back to black.
     backgroundLayer.fillScreen(COLOR_BLACK);
     backgroundLayer.swapBuffers();
     scrollingLayer.setMode(stopped);
     scrollingLayer.setColor({0xff, 0xff, 0xff});
 
     // Set large font to read
-    scrollingLayer.setFont(font6x10);
+    scrollingLayer.setFont(font5x7);
 
-    writeDebugScreen("POWER: ON", millis());
+    unsigned long now = millis();
+    writeDebugScreen("POWER: ON", now);
 
 
     // ----------------------------------------------
     // ---------- SD Card Setup  --------------------
     // ----------------------------------------------
     if (use_sd) {
-        SPI1.setMOSI(SD_MOSI);
-        SPI1.setMISO(SD_MISO);
-        SPI1.setSCK(SD_SCK);
-        if(!card.init(SPI_HALF_SPEED, SD_CS)) {
+        if(!initSDCard(SD_CS)) {
             scrollingLayer.start("No SD card", -1);
             Serial.println("No SD card");
             while(1);
         }
-        scrollingLayer.start("SD Card found!", -1);
-        while(1);
     }
 
     // Determine how many animated GIF files exist
     num_files = wrap_enumerateGIFFiles(GIF_DIRECTORY, true);
 
     if(num_files < 0) {
-        scrollingLayer.start("No gifs directory", -1);
+        writeDebugScreen("No gifs directory", now);
         Serial.println("No gifs directory");
         while(1);
     }
 
     if(!num_files) {
-        scrollingLayer.start("Empty gifs directory", -1);
+        writeDebugScreen("Empty gifs directory", now);
         Serial.println("Empty gifs directory");
         while(1);
+    }
+
+    if (use_sd) {
+        char buf[60];
+        buf[0] = 0;
+        strcat(buf, "Found ");
+        strcat(buf, String(num_files).c_str());
+        writeDebugScreen(buf, now);
     }
 
     // ----------------------------------------------
@@ -491,58 +532,10 @@ void loop() {
 
     HandleIRInputs(now);
 
-    if (cur_image_idx != next_image_idx) {
-        if (!use_sd) {
-            changeImageNoSD(next_image_idx);
-        } else {
-            // TODO(drewortega): SD code
-        }
+    if (!use_sd) {
+        drawImageNoSD(now);
+    } else {
+        drawImageWithSD(now);
     }
-    // else if(nextGIF)  {
-    //     nextGIF = 0;
-
-    //     if (use_sd) {
-    //         if (openGifFilenameByIndex(GIF_DIRECTORY, index) >= 0) {
-    //             // Can clear screen for new animation here, but this might cause flicker with short animations
-    //             // matrix.fillScreen(COLOR_BLACK);
-    //             // matrix.swapBuffers();
-
-    //             // start decoding, skipping to the next GIF if there's an error
-    //             if(decoder.startDecoding() < 0) {
-    //                 nextGIF = 1;
-    //                 return;
-    //             }
-
-    //         }
-    //     } else {
-    //         switch(index) {
-    //             case 0:
-    //                 strcat(str_buf, "Zero");
-    //                 break;
-    //             case 1:
-    //                 strcat(str_buf, "One");
-    //                 break;
-    //             case 2:
-    //                 strcat(str_buf, "Two");
-    //                 break;
-    //             default:
-    //                 strcat(str_buf, "Oops!");
-    //         }
-
-    //         scrollingLayer.start(str_buf, -1);
-    //         // Calculate time in the future to terminate animation
-    //         displayStartTime_millis = now;
-    //     }
-
-    //     // get the index for the next pass through
-    //     if (++index >= num_files) {
-    //         index = 0;
-    //     }
-
-    // }
-
-    // if(use_sd && decoder.decodeFrame() < 0) {
-    //     // There's an error with this GIF, go to the next one
-    //     nextGIF = 1;
-    // }
+    is_first_frame = false;
 }
