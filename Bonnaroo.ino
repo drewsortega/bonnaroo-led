@@ -19,12 +19,6 @@
  * (customize below with the GIF_DIRECTORY definition) then plays random GIFs in the directory,
  * looping each GIF for DISPLAY_TIME_SECONDS
  *
- * This example is meant to give you an idea of how to add GIF playback to your own sketch.
- * For a project that adds GIF playback with other features, take a look at
- * Light Appliance and Aurora:
- * https://github.com/CraigLindley/LightAppliance
- * https://github.com/pixelmatix/aurora
- *
  * If you find any GIFs that won't play properly, please attach them to a new
  * Issue post in the GitHub repo here:
  * https://github.com/pixelmatix/AnimatedGIFs/issues
@@ -91,10 +85,12 @@ const uint8_t kPanelType = SM_PANELTYPE_HUB75_32ROW_MOD16SCAN;  // Choose the co
 const uint32_t kMatrixOptions = (SMARTMATRIX_OPTIONS_C_SHAPE_STACKING);        // see docs for options: https://github.com/pixelmatix/SmartMatrix/wiki
 const uint8_t kBackgroundLayerOptions = (SM_BACKGROUND_OPTIONS_NONE);
 const uint8_t kScrollingLayerOptions = (SM_SCROLLING_OPTIONS_NONE);
+const uint8_t kIndexedLayerOptions = (SM_INDEXED_OPTIONS_NONE);
 
 SMARTMATRIX_ALLOCATE_BUFFERS(matrix, kMatrixWidth, kMatrixHeight, kRefreshDepth, kDmaBufferRows, kPanelType, kMatrixOptions);
 SMARTMATRIX_ALLOCATE_BACKGROUND_LAYER(backgroundLayer, kMatrixWidth, kMatrixHeight, COLOR_DEPTH, kBackgroundLayerOptions);
 SMARTMATRIX_ALLOCATE_SCROLLING_LAYER(scrollingLayer, kMatrixWidth, kMatrixHeight, COLOR_DEPTH, kScrollingLayerOptions);
+SMARTMATRIX_ALLOCATE_INDEXED_LAYER(indexedLayer, kMatrixWidth, kMatrixHeight, COLOR_DEPTH, kIndexedLayerOptions);
 
 /* template parameters are maxGifWidth, maxGifHeight, lzwMaxBits
  * 
@@ -106,7 +102,6 @@ Sd2Card card;
 SdVolume volume;
 SdFile root;
 
-int num_files;
 
 void screenClearCallback(void) {
   backgroundLayer.fillScreen({0,0,0});
@@ -131,7 +126,7 @@ int wrap_enumerateGIFFiles(const char *directoryName, bool displayFilenames) {
     if (use_sd) {
         return wrap_enumerateGIFFiles(directoryName, displayFilenames);
     }
-    return 3;
+    return 5;
 }
 
 // Remote Layout:
@@ -249,18 +244,33 @@ void adjustBrightness(int amount) {
     matrix.setBrightness(brightness);
 }
 
+int num_files = 0;
+static int cur_image_idx = 0;
+static int next_image_idx = 0;
+void requestChangeImageIdx(int amount) {
+    next_image_idx = cur_image_idx + amount;
+
+    // Wrap around images on overflow.
+    if (next_image_idx < 0) {
+        next_image_idx = num_files - 1;
+    } else if (next_image_idx >= num_files) {
+        next_image_idx = 0;
+    }
+}
+
 void HandleIRInputs(unsigned long now) {
     char button_name[16];
     button_name[0] = 0;
     char debug_buf[300];
     debug_buf[0] = 0;
-    scrollingLayer.setFont(font5x7);
     static unsigned long lastAcceptedIRTimestamp = 0; // stored in millis
 
     if (now - lastAcceptedIRTimestamp > 3000) {
         // Clear debug screen if its been on for more than 3000 seconds and
         // no recent valid input. debug_buf should be empty right now.
         scrollingLayer.start(debug_buf, -1);
+        indexedLayer.fillScreen(0);
+        indexedLayer.swapBuffers();
     }
 
     if (!IrReceiver.decode()) {
@@ -285,22 +295,65 @@ void HandleIRInputs(unsigned long now) {
     switch(received_data) {
         case BUT_VOL_DOWN:
             adjustBrightness(-26);
-            strcat(debug_buf, "Brt: ");
+            strcat(debug_buf, "BRT: ");
             strcat(debug_buf, String(brightness).c_str());
-            scrollingLayer.start(debug_buf, -1);
             break;
         case BUT_VOL_UP:
             adjustBrightness(26);
-            strcat(debug_buf, "Brt: ");
+            strcat(debug_buf, "BRT: ");
             strcat(debug_buf, String(brightness).c_str());
-            scrollingLayer.start(debug_buf, -1);
+            break;
+        case BUT_LEFT:
+            requestChangeImageIdx(-1);
+            strcat(debug_buf, "IMG: ");
+            strcat(debug_buf, String(next_image_idx).c_str());
+            break;
+        case BUT_RIGHT:
+            requestChangeImageIdx(1);
+            strcat(debug_buf, "IMG: ");
+            strcat(debug_buf, String(next_image_idx).c_str());
             break;
         default:
             // Unhandled buttons just display name.
-            scrollingLayer.start(button_name, -1);
+            
+            strcat(debug_buf, button_name);
             break;
     }
+
+    indexedLayer.fillScreen(0);
+    indexedLayer.setIndexedColor(1, COLOR_BLACK);
+    for(int row=0; row<12; row++) {
+        for(int col=0; col<(strlen(debug_buf) * 6) + 2; col++) {
+            indexedLayer.drawPixel(col,row,1);
+        }
+    }
+    indexedLayer.swapBuffers();
+    scrollingLayer.start(debug_buf, -1);
     IrReceiver.resume(); // Receive the next value
+}
+
+void changeImageNoSD(int next_image_idx) {
+    switch(next_image_idx) {
+        case 0:
+            backgroundLayer.fillScreen(COLOR_BLACK);
+            break;
+        case 1:
+            backgroundLayer.fillScreen(COLOR_WHITE);
+            break;
+        case 2:
+            backgroundLayer.fillScreen(COLOR_RED);
+            break;
+        case 3:
+            backgroundLayer.fillScreen(COLOR_BLUE);
+            break;
+        case 4:
+            backgroundLayer.fillScreen(COLOR_GREEN);
+            break;
+        default:
+            backgroundLayer.fillScreen(COLOR_BLACK);
+    }
+    backgroundLayer.swapBuffers();
+    cur_image_idx = next_image_idx;
 }
 
 
@@ -329,6 +382,7 @@ void setup() {
     Serial.println("Starting AnimatedGIFs Sketch");
 
     matrix.addLayer(&backgroundLayer); 
+    matrix.addLayer(&indexedLayer); 
     matrix.addLayer(&scrollingLayer);
 
     matrix.setBrightness(brightness);
@@ -340,10 +394,14 @@ void setup() {
 
 
     // Clear screen
-    backgroundLayer.fillScreen(COLOR_RED);
+    // TODO(drewsortega): Change this back to black.
+    backgroundLayer.fillScreen(COLOR_BLACK);
     backgroundLayer.swapBuffers();
     scrollingLayer.setMode(stopped);
     scrollingLayer.setColor({0xff, 0xff, 0xff});
+
+    // Set large font to read
+    scrollingLayer.setFont(font6x10);
 
 
     // ----------------------------------------------
@@ -377,33 +435,25 @@ void setup() {
         while(1);
     }
 
-  IrReceiver.begin(IR_RECEIVE_PIN, DISABLE_LED_FEEDBACK); // Start the receiver
+    // ----------------------------------------------
+    // ---------- IR Receiver Setup  ----------------
+    // ----------------------------------------------
+    IrReceiver.begin(IR_RECEIVE_PIN, DISABLE_LED_FEEDBACK); // Start the receiver
 }
 
 
 void loop() {
-    static unsigned long displayStartTime_millis;
-    static int nextGIF = 1;     // we haven't loaded a GIF yet on first pass through, make sure we do that
-
     unsigned long now = millis();
 
-    static int index = 0;
-
-#if 1
-    // default behavior is to play the gif for DISPLAY_TIME_SECONDS or for NUMBER_FULL_CYCLES, whichever comes first
-    if((now - displayStartTime_millis) > (DISPLAY_TIME_SECONDS * 1000)/* || (use_sd && decoder.getCycleNumber() > NUMBER_FULL_CYCLES)*/)
-        nextGIF = 1;
-#else
-    // alt behavior is to play the gif until both DISPLAY_TIME_SECONDS and NUMBER_FULL_CYCLES have passed
-    if((now - displayStartTime_millis) > (DISPLAY_TIME_SECONDS * 1000) /*&& (use_sd && decoder.getCycleNumber() > NUMBER_FULL_CYCLES)*/)
-        nextGIF = 1;
-#endif
-
-    char str_buf[300];
-    str_buf[0] = 0;
-    scrollingLayer.setFont(font5x7);
-
     HandleIRInputs(now);
+
+    if (cur_image_idx != next_image_idx) {
+        if (!use_sd) {
+            changeImageNoSD(next_image_idx);
+        } else {
+            // TODO(drewortega): SD code
+        }
+    }
     // else if(nextGIF)  {
     //     nextGIF = 0;
 
@@ -447,8 +497,8 @@ void loop() {
 
     // }
 
-    if(use_sd && decoder.decodeFrame() < 0) {
-        // There's an error with this GIF, go to the next one
-        nextGIF = 1;
-    }
+    // if(use_sd && decoder.decodeFrame() < 0) {
+    //     // There's an error with this GIF, go to the next one
+    //     nextGIF = 1;
+    // }
 }
