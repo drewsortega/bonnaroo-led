@@ -8,4 +8,4 @@ SDCard Reader https://a.co/d/3aymKGg
 
 Soldering iron for headers to teensy
 
-More setailst TBA (after Bonnaroo!)
+More details TBA (after Bonnaroo!)
