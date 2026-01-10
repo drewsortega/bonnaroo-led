@@ -254,6 +254,7 @@ void printUsage(const char* programName) {
     printf("  --no-gap         Disable gap between LEDs\n");
     printf("\nControls:\n");
     printf("  Left/Right       Previous/Next image\n");
+    printf("  Up/Down          Increase/Decrease brightness\n");
     printf("  -/+              Decrease/Increase brightness\n");
     printf("  Space            Play/Pause\n");
     printf("  Q                Quit\n");
@@ -369,10 +370,10 @@ int main(int argc, char* argv[]) {
                         code = 0xF50ABF00;  // BUT_RIGHT
                         break;
                     case SDLK_UP:
-                        code = 0xFA05BF00;  // BUT_UP
+                        code = 0xFD02BF00;  // BUT_VOL_UP (Brightness Up)
                         break;
                     case SDLK_DOWN:
-                        code = 0xF20DBF00;  // BUT_DOWN
+                        code = 0xFF00BF00;  // BUT_VOL_DOWN (Brightness Down)
                         break;
                     
                     // Action buttons
