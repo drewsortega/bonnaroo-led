@@ -195,8 +195,8 @@ void writeDebugScreen(char text[], unsigned long now, bool allow_clear = true) {
     allow_debug_clear = allow_clear;
     indexedLayer.fillScreen(0);
     indexedLayer.setIndexedColor(1, COLOR_BLACK);
-    for(int row=0; row<8; row++) {
-        for(int col=0; col<(strlen(text) * 5)+1; col++) {
+    for(int row=0; row<6; row++) {
+        for(int col=0; col<64; col++) {
             indexedLayer.drawPixel(col,row,1);
         }
     }
@@ -300,6 +300,10 @@ void change_image_idx(int amount) {
     } else if (cur_image_idx >= num_files) {
         cur_image_idx = 0;
     }
+    backgroundLayer.fillScreen(COLOR_BLACK);
+    backgroundLayer.swapBuffers();
+    backgroundLayer.fillScreen(COLOR_BLACK);
+    backgroundLayer.swapBuffers();
     is_first_frame = true;
 }
 
@@ -342,13 +346,13 @@ void HandleIRInputs(unsigned long now) {
             break;
         case BUT_LEFT:
             change_image_idx(-1);
-            strcat(debug_buf, "IMG: ");
-            strcat(debug_buf, String(cur_image_idx).c_str());
+            // strcat(debug_buf, "IMG: ");
+            // strcat(debug_buf, String(cur_image_idx).c_str());
             break;
         case BUT_RIGHT:
             change_image_idx(1);
-            strcat(debug_buf, "IMG: ");
-            strcat(debug_buf, String(cur_image_idx).c_str());
+            // strcat(debug_buf, "IMG: ");
+            // strcat(debug_buf, String(cur_image_idx).c_str());
             break;
         default:
             // Unhandled buttons just display name.
@@ -357,7 +361,9 @@ void HandleIRInputs(unsigned long now) {
             break;
     }
 
-    writeDebugScreen(debug_buf, now);
+    if (strlen(debug_buf) > 0) {
+        writeDebugScreen(debug_buf, now);
+    }
     IrReceiver.resume(); // Receive the next value
 }
 
@@ -425,38 +431,50 @@ void drawImageNoSD(unsigned long now) {
 
 void drawImageWithSD(unsigned long now) {
     // For GIFs
-    if (is_first_frame) {
-        if(!openGifFilenameByIndex("/gifs/", cur_image_idx)) {
-            writeDebugScreen("Fail", now);
-            Serial.println("Fail");
-        }
-        Serial.println(my_sd_file.name());
-    }
-
-
     // these variables keep track of when we're done displaying the last frame and are ready for a new frame
     static uint32_t lastFrameDisplayTime = 0;
     static unsigned int currentFrameDelay = 0;
+    static bool start_ok = true;
+
+    if (is_first_frame) {
+        char name_buf[63];
+        name_buf[0] = 0;
+        if(!openGifFilenameByIndex("/gifs/", cur_image_idx, name_buf)) {
+            writeDebugScreen("Fail", now);
+            Serial.println("Fail");
+        } else {
+            writeDebugScreen(name_buf, now);
+        }
+        Serial.println(my_sd_file.name());
+        
+        // Reset timing so new GIF loads immediately
+        lastFrameDisplayTime = 0;
+        currentFrameDelay = 0;
+        start_ok = true;
+    }
 
     // // Check if we should display the next frame on this cycle.
     if ((now - lastFrameDisplayTime) > currentFrameDelay) {
-        if (is_first_frame) {
+        if (is_first_frame || !start_ok) {
+            backgroundLayer.fillScreen(COLOR_BLACK);
+            backgroundLayer.swapBuffers();
             if(decoder.startDecoding() < 0) {
-                writeDebugScreen("Bad frame", now);
                 lastFrameDisplayTime = 0;
+                start_ok = false;
+                return;
             }
         }
+        start_ok = true;
         // decode frame without delaying after decode
         int result = decoder.decodeFrame(false);
 
         lastFrameDisplayTime = now;
         currentFrameDelay = decoder.getFrameDelay_ms();
 
-        // it's time to start decoding a new GIF if there was an error, and don't wait to decode
         if(result < 0) {
-            writeDebugScreen("Bad frame", now);
             lastFrameDisplayTime = 0;
             currentFrameDelay = 0;
+            start_ok = false;
         }
     }
 }
@@ -501,11 +519,11 @@ void setup() {
     // Clear screen
     backgroundLayer.fillScreen(COLOR_BLACK);
     backgroundLayer.swapBuffers();
-    scrollingLayer.setMode(stopped);
+    scrollingLayer.setMode(wrapForward);
     scrollingLayer.setColor({0xff, 0xff, 0xff});
 
     // Set large font to read
-    scrollingLayer.setFont(font5x7);
+    scrollingLayer.setFont(font3x5);
 
     unsigned long now = millis();
     writeDebugScreen("POWER: ON", now);

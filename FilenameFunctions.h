@@ -4,11 +4,11 @@
 #include <SD.h>
 #include <SPI.h>
 
-static File my_sd_file;
+extern File my_sd_file;
 
 int enumerateGIFFiles(const char *directoryName, bool displayFilenames);
 void getGIFFilenameByIndex(const char *directoryName, int index, char *pnBuffer);
-bool openGifFilenameByIndex(const char *directoryName, int index);
+bool openGifFilenameByIndex(const char *directoryName, int index, char* name_buf);
 bool initSDCard(int chipSelectPin, bool use_spi1);
 
 bool fileSeekCallback(unsigned long position);

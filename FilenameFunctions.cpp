@@ -11,6 +11,9 @@
 #include <SD.h>
 #include <SPI.h>
 
+// Global file handle shared across all translation units
+File my_sd_file;
+
 int numberOfFiles;
 
 bool fileSeekCallback(unsigned long position) {
@@ -145,7 +148,7 @@ void getGIFFilenameByIndex(const char *directoryName, int index, char *pnBuffer)
     directory.close();
 }
 
-bool openGifFilenameByIndex(const char *directoryName, int index) {
+bool openGifFilenameByIndex(const char *directoryName, int index, char* name_buf) {
     char pathname[255];
 
     getGIFFilenameByIndex(directoryName, index, pathname);
@@ -162,6 +165,8 @@ bool openGifFilenameByIndex(const char *directoryName, int index) {
         Serial.println("Error opening GIF file");
         return false;
     }
+
+    strcpy(name_buf, my_sd_file.name());
 
     return true;
 }
