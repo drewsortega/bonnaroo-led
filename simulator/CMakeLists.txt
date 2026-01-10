@@ -28,6 +28,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/..
     ${SDL2_INCLUDE_DIRS}
     ${SDL2_TTF_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src
 )
 
 # Source files
@@ -35,6 +36,25 @@ set(SOURCES
     main.cpp
     ${INO_CPP}
     ${CMAKE_CURRENT_SOURCE_DIR}/../FilenameFunctions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/MatrixFont.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/Layer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/Font_apple4x6_256.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/Font_apple5x7_256.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/Font_apple6x10.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/Font_apple8x13.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/Font_gohufont6x11.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/Font_gohufont6x11b.c
+)
+
+# Force font files to be compiled as C++ because MatrixFontCommon.h lacks extern "C" guard
+set_source_files_properties(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/Font_apple4x6_256.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/Font_apple5x7_256.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/Font_apple6x10.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/Font_apple8x13.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/Font_gohufont6x11.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/SmartMatrix/src/Font_gohufont6x11b.c
+    PROPERTIES LANGUAGE CXX
 )
 
 # Create executable

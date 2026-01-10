@@ -118,11 +118,131 @@ CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunc
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.s
 
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o: CMakeFiles/led_simulator.dir/flags.make
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o: CMakeFiles/led_simulator.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o -MF CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o.d -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o -c /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp > CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.i
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.s
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o: CMakeFiles/led_simulator.dir/flags.make
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o: CMakeFiles/led_simulator.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o -MF CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o.d -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o -c /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp > CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.i
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.s
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o: CMakeFiles/led_simulator.dir/flags.make
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o: CMakeFiles/led_simulator.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o -MF CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o.d -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o -c /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c > CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.i
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.s
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o: CMakeFiles/led_simulator.dir/flags.make
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o: CMakeFiles/led_simulator.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o -MF CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o.d -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o -c /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c > CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.i
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.s
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o: CMakeFiles/led_simulator.dir/flags.make
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o: CMakeFiles/led_simulator.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o -MF CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o.d -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o -c /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c > CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.i
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.s
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o: CMakeFiles/led_simulator.dir/flags.make
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o: CMakeFiles/led_simulator.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o -MF CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o.d -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o -c /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c > CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.i
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.s
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o: CMakeFiles/led_simulator.dir/flags.make
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o: CMakeFiles/led_simulator.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o -MF CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o.d -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o -c /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c > CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.i
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.s
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o: CMakeFiles/led_simulator.dir/flags.make
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o: CMakeFiles/led_simulator.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o -MF CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o.d -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o -c /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c > CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.i
+
+CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.s
+
 # Object files for target led_simulator
 led_simulator_OBJECTS = \
 "CMakeFiles/led_simulator.dir/main.cpp.o" \
 "CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o" \
-"CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.o"
+"CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.o" \
+"CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o" \
+"CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o" \
+"CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o" \
+"CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o" \
+"CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o" \
+"CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o" \
+"CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o" \
+"CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o"
 
 # External object files for target led_simulator
 led_simulator_EXTERNAL_OBJECTS =
@@ -130,11 +250,19 @@ led_simulator_EXTERNAL_OBJECTS =
 led_simulator: CMakeFiles/led_simulator.dir/main.cpp.o
 led_simulator: CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o
 led_simulator: CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.o
+led_simulator: CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o
+led_simulator: CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o
+led_simulator: CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o
+led_simulator: CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o
+led_simulator: CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o
+led_simulator: CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o
+led_simulator: CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o
+led_simulator: CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o
 led_simulator: CMakeFiles/led_simulator.dir/build.make
 led_simulator: /opt/homebrew/Cellar/sdl2/2.32.10/lib/libSDL2.dylib
 led_simulator: /opt/homebrew/lib/libSDL2_ttf.dylib
 led_simulator: CMakeFiles/led_simulator.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable led_simulator"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Linking CXX executable led_simulator"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/led_simulator.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

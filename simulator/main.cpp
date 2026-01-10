@@ -19,9 +19,12 @@
 #include "mocks/Arduino.h"
 #include "mocks/SPI.h"
 #include "mocks/SD.h"
-#include "mocks/SmartMatrix.h"
+#include "mocks/MatrixHardware_Teensy4_ShieldV5.h"
 #include "mocks/IRremote.hpp"
 #include "mocks/GifDecoder.h"
+
+// Generic SmartMatrix Layer header (from real library)
+#include "Layer.h"
 
 // Global instances for mocks
 SerialClass Serial;
@@ -44,6 +47,11 @@ static TTF_Font* g_font = nullptr;
 static int g_scale = 8;
 static int g_gap = 1;
 static bool g_running = true;
+
+// Matrix dimensions (must match Bonnaroo.ino)
+const int g_matrix_width = 64;
+const int g_matrix_height = 64;
+const rotationDegrees g_rotation = rotation0; // Uses enum from MatrixCommon.h
 
 // Set base path for SD card
 void SD_setBasePath(const std::string& path) {
@@ -104,107 +112,123 @@ bool initSDL() {
     return true;
 }
 
+// External reference to the matrix instance defined in Bonnaroo.cpp
+extern SmartMatrixShim matrix;
+
+// Necessary headers for Layer interaction
+#include "Layer.h"
+#include <algorithm>
+
 /**
- * Render the LED grid to the SDL window.
+ * Update the simulator display by asking SmartMatrix layers to render
  */
-void renderDisplay() {
-    // Clear with dark gray (simulates LED panel background)
-    SDL_SetRenderDrawColor(g_renderer, 20, 20, 20, 255);
-    SDL_RenderClear(g_renderer);
+void SmartMatrixShim::updateSimulator(SDL_Renderer* renderer) {
+    int width = 64;
+    int height = 64;
     
-    int ledSize = g_scale - g_gap;
-    float brightnessFactor = g_brightness / 255.0f;
+    // Buffer for a single row (using rgb24 as per color depth)
+    rgb24 rowBuffer[64];
     
-    // Apply rotation
-    int width = g_matrix_width;
-    int height = g_matrix_height;
+    // Clear screen first (background)
+    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 255);
+    SDL_RenderClear(renderer);
+
+    // Simulate vertical sync / new frame interrupt
+    // This is CRITICAL: calls handleBufferSwap() internally to clear swapPending flags
+    // Without this, any code calling swapBuffers() will hang indefinitely
+    for (auto* layer : layers) {
+        layer->frameRefreshCallback();
+    }
+
+    static bool lutTested = false;
+    if (!lutTested) {
+        printf("[Simulator] Testing calculate8BitBackgroundLUT...\n");
+        color_chan_t testLut[256];
+        calculate8BitBackgroundLUT(testLut, 255);
+        printf("[Simulator] LUT[255] for brightness 255: %d (Expected ~65535)\n", testLut[255]);
+        calculate8BitBackgroundLUT(testLut, 50);
+        printf("[Simulator] LUT[255] for brightness 50: %d\n", testLut[255]);
+        
+        printf("[Simulator] Struct Sizes: rgb24=%lu, rgb48=%lu\n", sizeof(rgb24), sizeof(rgb48));
+        
+        if (!layers.empty()) {
+            SM_Layer* l = layers[0];
+            printf("[Simulator] Layer 0 Info: Width=%d, Height=%d, Rotation=%d\n", 
+                   l->getLayerWidth(), l->getLayerHeight(), l->getLayerRotation());
+        }
+        
+        lutTested = true;
+    }
     
+    // Iterate over all rows
     for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            // Apply rotation when reading from buffer
-            int srcX = x, srcY = y;
-            switch (g_rotation) {
-                case rotation90:
-                    srcX = height - 1 - y;
-                    srcY = x;
-                    break;
-                case rotation180:
-                    srcX = width - 1 - x;
-                    srcY = height - 1 - y;
-                    break;
-                case rotation270:
-                    srcX = y;
-                    srcY = width - 1 - x;
-                    break;
-                default:
-                    break;
+        // Clear the row buffer to black/transparent before rendering layers
+        memset(rowBuffer, 0, sizeof(rowBuffer));
+        
+        // Ask each layer to fill the row
+        for (auto* layer : layers) {
+            layer->fillRefreshRow(y, rowBuffer);
+        }
+        
+        // Debug: Check first row for data (once per second)
+        static uint32_t lastLogTime = 0;
+        uint32_t now = SDL_GetTicks();
+        if (now - lastLogTime > 1000) {
+            
+            // Check pixel data in row 32
+            int nonBlack = 0;
+            rgb24 sample = {0,0,0};
+            // Note: Use 32 if height > 32, else 0
+            int debugRow = (height > 32) ? 32 : 0;
+            
+            // We must read the data AFTER fillRefreshRow has run on this row.
+            // But we are in the 'y' loop. We should check ONLY when y == debugRow.
+            if (y == debugRow) {
+                 for(int x=0; x<width; x++) {
+                    if(rowBuffer[x].red > 0 || rowBuffer[x].green > 0 || rowBuffer[x].blue > 0) {
+                        nonBlack++;
+                        sample = rowBuffer[x];
+                    }
+                }
+                printf("[Simulator] Layers: %lu. Row %d Info: %d non-black pixels. Sample: %d,%d,%d. Brightness: %d\n", 
+                       layers.size(), debugRow, nonBlack, sample.red, sample.green, sample.blue, brightness);
+                lastLogTime = now;
             }
+        }
+        
+        // Now draw this row to SDL
+        for (int x = 0; x < width; x++) {
+            rgb24& pixel = rowBuffer[x];
             
-            int idx = (srcY * width + srcX) * 3;
+            // Apply brightness (basic scaling)
+            float factor = brightness / 255.0f;
+            uint8_t r = (uint8_t)(pixel.red * factor);
+            uint8_t g = (uint8_t)(pixel.green * factor);
+            uint8_t b = (uint8_t)(pixel.blue * factor);
             
-            // Apply brightness
-            uint8_t r = (uint8_t)(g_display_buffer[idx + 0] * brightnessFactor);
-            uint8_t g = (uint8_t)(g_display_buffer[idx + 1] * brightnessFactor);
-            uint8_t b = (uint8_t)(g_display_buffer[idx + 2] * brightnessFactor);
+            // Simulator rotation logic (reused from before)
+            int dispX = x, dispY = y;
+            // ... rotation transform if needed, but for now 1:1 map
             
-            SDL_SetRenderDrawColor(g_renderer, r, g, b, 255);
+            SDL_SetRenderDrawColor(renderer, r, g, b, 255);
             
+            int ledSize = g_scale - g_gap;
             SDL_Rect rect = {
-                x * g_scale + g_gap / 2,
-                y * g_scale + g_gap / 2,
+                dispX * g_scale + g_gap / 2,
+                dispY * g_scale + g_gap / 2,
                 ledSize,
                 ledSize
             };
-            
-            SDL_RenderFillRect(g_renderer, &rect);
+            SDL_RenderFillRect(renderer, &rect);
         }
     }
     
-    // Render scrolling text overlay if active
-    if (scrollingLayer.isActive() && g_font) {
-        unsigned long elapsed = millis() - scrollingLayer.getStartTime();
-        
-        const char* text = scrollingLayer.getText();
-        if (text && text[0] != '\0') {
-            // Render text to surface
-            SDL_Color white = {255, 255, 255, 255};
-            SDL_Surface* textSurface = TTF_RenderText_Solid(g_font, text, white);
-            
-            if (textSurface) {
-                SDL_Texture* textTexture = SDL_CreateTextureFromSurface(g_renderer, textSurface);
-                
-                if (textTexture) {
-                    // Draw black background bar
-                    SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
-                    SDL_Rect bgRect = {0, 0, g_matrix_width * g_scale, 20};
-                    SDL_RenderFillRect(g_renderer, &bgRect);
-                    
-                    // Calculate scroll position
-                    int scrollOffset = (int)(elapsed * 0.08);  // Scroll speed
-                    int textX = g_matrix_width * g_scale - scrollOffset;
-                    
-                    // Draw text at scrolling position
-                    SDL_Rect textRect = {textX, 2, textSurface->w, textSurface->h};
-                    SDL_RenderCopy(g_renderer, textTexture, NULL, &textRect);
-                    
-                    SDL_DestroyTexture(textTexture);
-                }
-                SDL_FreeSurface(textSurface);
-            }
-        }
-        
-        // Hide text after 3 seconds
-        if (elapsed > 3000) {
-            scrollingLayer.stop();
-        }
-    } else if (scrollingLayer.isActive()) {
-        // No font available, just time out
-        if (millis() - scrollingLayer.getStartTime() > 3000) {
-            scrollingLayer.stop();
-        }
-    }
-    
-    SDL_RenderPresent(g_renderer);
+    SDL_RenderPresent(renderer);
+}
+
+// Global render function called by main loop
+void renderDisplay() {
+    matrix.updateSimulator(g_renderer);
 }
 
 /**
@@ -239,6 +263,9 @@ void printUsage(const char* programName) {
  * Main entry point.
  */
 int main(int argc, char* argv[]) {
+    // Disable stdout buffering to ensure logs appear immediately
+    setbuf(stdout, NULL);
+
     // Get base path (Arduino project directory, parent of simulator/)
     std::string basePath;
     std::string exePath = argv[0];
@@ -291,35 +318,147 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    printf("[Simulator] Starting Arduino setup()...\n");
-    
-    // Call Arduino setup
-    setup();
-    
-    printf("[Simulator] Entering main loop...\n");
-    
-    // Main loop
-    while (g_running) {
-        // Check for quit via Q key or window close
-        SDL_PumpEvents();
-        if (checkQuit()) {
-            g_running = false;
-            break;
+    // Start Arduino thread
+    printf("[Simulator] Starting Arduino thread...\n");
+    std::thread arduinoThread([]() {
+        printf("[Simulator] Starting Arduino setup()...\n");
+        setup();
+        printf("[Simulator] Entering main loop (thread)...\n");
+        while (g_running) {
+            loop();
+            // Yield to prevent CPU hogging in the tight loop
+            std::this_thread::yield(); 
+            // Small delay to simulate partial timing? 
+            // Actually delay() is mocked to sleep, so loop() shouldn't spin too fast if logic implies delays.
+            // But if loop() is tight, we need to breathe.
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
-        
-        // Call Arduino loop
-        loop();
+    });
+    
+    printf("[Simulator] Entering main render loop...\n");
+    
+    // Main render loop
+    while (g_running) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+             if (event.type == SDL_QUIT) {
+                g_running = false;
+                break;
+            }
+            
+            if (event.type == SDL_KEYDOWN) {
+                IRRawDataType code = 0;
+                
+                switch (event.key.keysym.sym) {
+                    // Volume/brightness controls
+                    case SDLK_MINUS:
+                    case SDLK_KP_MINUS:
+                        code = 0xFF00BF00;  // BUT_VOL_DOWN
+                        break;
+                    case SDLK_EQUALS:
+                    case SDLK_PLUS:
+                    case SDLK_KP_PLUS:
+                        code = 0xFD02BF00;  // BUT_VOL_UP
+                        break;
+                    
+                    // Navigation
+                    case SDLK_LEFT:
+                        code = 0xF708BF00;  // BUT_LEFT
+                        break;
+                    case SDLK_RIGHT:
+                        code = 0xF50ABF00;  // BUT_RIGHT
+                        break;
+                    case SDLK_UP:
+                        code = 0xFA05BF00;  // BUT_UP
+                        break;
+                    case SDLK_DOWN:
+                        code = 0xF20DBF00;  // BUT_DOWN
+                        break;
+                    
+                    // Action buttons
+                    case SDLK_RETURN:
+                    case SDLK_KP_ENTER:
+                        code = 0xF609BF00;  // BUT_ENTER
+                        break;
+                    case SDLK_SPACE:
+                        code = 0xFE01BF00;  // BUT_PLAY
+                        break;
+                    case SDLK_BACKSPACE:
+                    case SDLK_ESCAPE:
+                        code = 0xF10EBF00;  // BUT_BACK
+                        break;
+                    case SDLK_s:
+                        code = 0xF906BF00;  // BUT_STOP
+                        break;
+                    
+                    // Number keys
+                    case SDLK_0:
+                    case SDLK_KP_0:
+                        code = 0xF30CBF00;  // BUT_0
+                        break;
+                    case SDLK_1:
+                    case SDLK_KP_1:
+                        code = 0xEF10BF00;  // BUT_1
+                        break;
+                    case SDLK_2:
+                    case SDLK_KP_2:
+                        code = 0xEE11BF00;  // BUT_2
+                        break;
+                    case SDLK_3:
+                    case SDLK_KP_3:
+                        code = 0xED12BF00;  // BUT_3
+                        break;
+                    case SDLK_4:
+                    case SDLK_KP_4:
+                        code = 0xEB14BF00;  // BUT_4
+                        break;
+                    case SDLK_5:
+                    case SDLK_KP_5:
+                        code = 0xEA15BF00;  // BUT_5
+                        break;
+                    case SDLK_6:
+                    case SDLK_KP_6:
+                        code = 0xE916BF00;  // BUT_6
+                        break;
+                    case SDLK_7:
+                    case SDLK_KP_7:
+                        code = 0xE718BF00;  // BUT_7
+                        break;
+                    case SDLK_8:
+                    case SDLK_KP_8:
+                        code = 0xE619BF00;  // BUT_8
+                        break;
+                    case SDLK_9:
+                    case SDLK_KP_9:
+                        code = 0xE51ABF00;  // BUT_9
+                        break;
+                    
+                    // Quit on Q
+                    case SDLK_q:
+                        g_running = false;
+                        code = 0xFFFFFFFF;  // Special quit code
+                        break;
+                }
+                
+                if (code != 0) {
+                    IrReceiver.injectCode(code);
+                }
+            }
+        }
         
         // Render the display
+        // This calls updateSimulator which calls frameRefreshCallback
+        // This clears swapPending flags, allowing the Arduino thread to proceed past swapBuffers()
         renderDisplay();
         
-        // Check for special quit code from IR receiver
-        if (IrReceiver.decodedIRData.decodedRawData == 0xFFFFFFFF) {
-            g_running = false;
-        }
-        
-        // Small delay to prevent CPU spinning
-        SDL_Delay(1);
+        // Simulate 60FPS refresh rate (approx 16ms)
+        // This controls how often we clear the swap buffers
+        SDL_Delay(16);
+    }
+    
+    // Join thread before exiting
+    if (arduinoThread.joinable()) {
+        arduinoThread.join();
     }
     
     // Cleanup

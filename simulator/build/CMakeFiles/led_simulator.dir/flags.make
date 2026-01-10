@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = -DSIMULATOR_MODE=1
 
-CXX_INCLUDES = -I/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks -I/Users/orvyx/Documents/Arduino/Bonnaroo/simulator -I/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/.. -I/opt/homebrew/Cellar/sdl2/2.32.10/include -I/opt/homebrew/include/SDL2 -isystem /opt/homebrew/Cellar/sdl2/2.32.10/include/SDL2
+CXX_INCLUDES = -I/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks -I/Users/orvyx/Documents/Arduino/Bonnaroo/simulator -I/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/.. -I/opt/homebrew/Cellar/sdl2/2.32.10/include -I/opt/homebrew/include/SDL2 -I/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src -isystem /opt/homebrew/Cellar/sdl2/2.32.10/include/SDL2
 
 CXX_FLAGSarm64 = -std=gnu++17 -arch arm64 -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers
 

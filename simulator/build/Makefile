@@ -177,6 +177,198 @@ Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.s
 .PHONY : Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.s
 
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.o: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.o
+
+# target to build an object file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.i: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.i
+
+# target to preprocess a source file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.i
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.s: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.s
+
+# target to generate assembly for a file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.s
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.o: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.o
+
+# target to build an object file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.i: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.i
+
+# target to preprocess a source file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.i
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.s: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.s
+
+# target to generate assembly for a file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.s
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.o: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.o
+
+# target to build an object file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.i: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.i
+
+# target to preprocess a source file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.i
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.s: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.s
+
+# target to generate assembly for a file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.s
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.o: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.o
+
+# target to build an object file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.i: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.i
+
+# target to preprocess a source file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.i
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.s: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.s
+
+# target to generate assembly for a file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.s
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.o: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.o
+
+# target to build an object file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.i: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.i
+
+# target to preprocess a source file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.i
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.s: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.s
+
+# target to generate assembly for a file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.s
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.o: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.o
+
+# target to build an object file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.i: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.i
+
+# target to preprocess a source file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.i
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.s: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.s
+
+# target to generate assembly for a file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.s
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.o: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.o
+
+# target to build an object file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.i: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.i
+
+# target to preprocess a source file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.i
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.s: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.s
+
+# target to generate assembly for a file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.s
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.o: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.o
+
+# target to build an object file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.i: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.i
+
+# target to preprocess a source file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.i
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.i
+
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.s: Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.s
+
+# target to generate assembly for a file
+Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/led_simulator.dir/build.make CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.s
+.PHONY : Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.s
+
 main.o: main.cpp.o
 .PHONY : main.o
 
@@ -216,6 +408,30 @@ help:
 	@echo "... Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.o"
 	@echo "... Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.i"
 	@echo "... Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.s"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.o"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.i"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.s"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.o"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.i"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.s"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.o"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.i"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.s"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.o"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.i"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.s"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.o"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.i"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.s"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.o"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.i"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.s"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.o"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.i"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.s"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.o"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.i"
+	@echo "... Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

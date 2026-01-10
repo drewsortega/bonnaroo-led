@@ -515,6 +515,7 @@ void setup() {
     // Clear screen
     backgroundLayer.fillScreen(COLOR_BLACK);
     backgroundLayer.swapBuffers();
+
     scrollingLayer.setMode(wrapForward);
     scrollingLayer.setColor({0xff, 0xff, 0xff});
 

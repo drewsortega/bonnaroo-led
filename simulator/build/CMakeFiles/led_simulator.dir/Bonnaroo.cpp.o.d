@@ -875,6 +875,8 @@ CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o: \
   /opt/homebrew/Cellar/sdl2/2.32.10/include/SDL2/SDL_locale.h \
   /opt/homebrew/Cellar/sdl2/2.32.10/include/SDL2/SDL_misc.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/MatrixHardware_Teensy4_ShieldV5.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/Layer.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/MatrixCommon.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/SD.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/dirent.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/dirent.h \
@@ -882,7 +884,23 @@ CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_s_ifmt.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_filesec_t.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/SPI.h \
-  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/SmartMatrix.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/SmartMatrix.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/CircularBuffer_SM.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/Layer_Scrolling.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/Layer.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/MatrixFontCommon.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdbool.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/Layer_Scrolling_Impl.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/Layer_Indexed.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/Layer_Indexed_Impl.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/Layer_Background.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/Layer_Background_Impl.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/MatrixCommonHub75.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/MatrixCommonApa102.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/MatrixCommonApa102Refresh.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/MatrixCommonApa102Calc.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/MatrixPanelMaps.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../gimpbitmap.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../bitmaps/bm_brat.c \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../bitmaps/../gimpbitmap.h \
