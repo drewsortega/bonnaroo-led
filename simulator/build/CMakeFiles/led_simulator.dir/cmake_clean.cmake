@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  "Bonnaroo.cpp"
   "CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o"
   "CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o.d"
   "CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.o"

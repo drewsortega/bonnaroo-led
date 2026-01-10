@@ -349,6 +349,9 @@ CMakeFiles/led_simulator.dir/main.cpp.o: \
   /opt/homebrew/Cellar/sdl2/2.32.10/include/SDL2/SDL_version.h \
   /opt/homebrew/Cellar/sdl2/2.32.10/include/SDL2/SDL_locale.h \
   /opt/homebrew/Cellar/sdl2/2.32.10/include/SDL2/SDL_misc.h \
+  /opt/homebrew/include/SDL2/SDL_ttf.h /opt/homebrew/include/SDL2/SDL.h \
+  /opt/homebrew/include/SDL2/begin_code.h \
+  /opt/homebrew/include/SDL2/close_code.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdio \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/string \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/max.h \

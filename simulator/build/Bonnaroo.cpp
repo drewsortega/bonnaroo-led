@@ -346,13 +346,13 @@ void HandleIRInputs(unsigned long now) {
             break;
         case BUT_LEFT:
             change_image_idx(-1);
-            // strcat(debug_buf, "IMG: ");
-            // strcat(debug_buf, String(cur_image_idx).c_str());
+            strcat(debug_buf, "IMG: ");
+            strcat(debug_buf, String(cur_image_idx).c_str());
             break;
         case BUT_RIGHT:
             change_image_idx(1);
-            // strcat(debug_buf, "IMG: ");
-            // strcat(debug_buf, String(cur_image_idx).c_str());
+            strcat(debug_buf, "IMG: ");
+            strcat(debug_buf, String(cur_image_idx).c_str());
             break;
         default:
             // Unhandled buttons just display name.

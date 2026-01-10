@@ -7,7 +7,6 @@ set(CMAKE_DEPENDS_GENERATOR "Unix Makefiles")
 # The top level Makefile was generated from the following files:
 set(CMAKE_MAKEFILE_DEPENDS
   "CMakeCache.txt"
-  "/Users/orvyx/Documents/Arduino/Bonnaroo/Bonnaroo.ino"
   "/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/CMakeLists.txt"
   "CMakeFiles/4.2.1/CMakeCXXCompiler.cmake"
   "CMakeFiles/4.2.1/CMakeSystem.cmake"
@@ -47,7 +46,6 @@ set(CMAKE_MAKEFILE_OUTPUTS
 
 # Byproducts of CMake generate step:
 set(CMAKE_MAKEFILE_PRODUCTS
-  "Bonnaroo.cpp"
   "CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 

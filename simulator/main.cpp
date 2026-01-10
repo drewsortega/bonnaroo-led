@@ -6,6 +6,7 @@
  */
 
 #include <SDL2/SDL.h>
+#include <SDL_ttf.h>
 #include <cstdio>
 #include <string>
 #include <cstdlib>
@@ -39,6 +40,7 @@ const void* font8x13 = nullptr;
 static SDL_Window* g_window = nullptr;
 static SDL_Renderer* g_renderer = nullptr;
 static SDL_Texture* g_texture = nullptr;
+static TTF_Font* g_font = nullptr;
 static int g_scale = 8;
 static int g_gap = 1;
 static bool g_running = true;
@@ -82,6 +84,20 @@ bool initSDL() {
     if (!g_renderer) {
         printf("Renderer could not be created! SDL_Error: %s\n", SDL_GetError());
         return false;
+    }
+    
+    // Initialize TTF
+    if (TTF_Init() < 0) {
+        printf("TTF could not initialize! TTF_Error: %s\n", TTF_GetError());
+    } else {
+        // Try to load a system font
+        g_font = TTF_OpenFont("/System/Library/Fonts/Helvetica.ttc", 14);
+        if (!g_font) {
+            g_font = TTF_OpenFont("/System/Library/Fonts/SFNSMono.ttf", 14);
+        }
+        if (!g_font) {
+            printf("[Simulator] Warning: Could not load font, text will not display\n");
+        }
     }
     
     printf("[Simulator] Window created: %dx%d (scale=%d)\n", windowWidth, windowHeight, g_scale);
@@ -145,8 +161,44 @@ void renderDisplay() {
     }
     
     // Render scrolling text overlay if active
-    if (scrollingLayer.isActive()) {
-        // For now, just clear after 3 seconds
+    if (scrollingLayer.isActive() && g_font) {
+        unsigned long elapsed = millis() - scrollingLayer.getStartTime();
+        
+        const char* text = scrollingLayer.getText();
+        if (text && text[0] != '\0') {
+            // Render text to surface
+            SDL_Color white = {255, 255, 255, 255};
+            SDL_Surface* textSurface = TTF_RenderText_Solid(g_font, text, white);
+            
+            if (textSurface) {
+                SDL_Texture* textTexture = SDL_CreateTextureFromSurface(g_renderer, textSurface);
+                
+                if (textTexture) {
+                    // Draw black background bar
+                    SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
+                    SDL_Rect bgRect = {0, 0, g_matrix_width * g_scale, 20};
+                    SDL_RenderFillRect(g_renderer, &bgRect);
+                    
+                    // Calculate scroll position
+                    int scrollOffset = (int)(elapsed * 0.08);  // Scroll speed
+                    int textX = g_matrix_width * g_scale - scrollOffset;
+                    
+                    // Draw text at scrolling position
+                    SDL_Rect textRect = {textX, 2, textSurface->w, textSurface->h};
+                    SDL_RenderCopy(g_renderer, textTexture, NULL, &textRect);
+                    
+                    SDL_DestroyTexture(textTexture);
+                }
+                SDL_FreeSurface(textSurface);
+            }
+        }
+        
+        // Hide text after 3 seconds
+        if (elapsed > 3000) {
+            scrollingLayer.stop();
+        }
+    } else if (scrollingLayer.isActive()) {
+        // No font available, just time out
         if (millis() - scrollingLayer.getStartTime() > 3000) {
             scrollingLayer.stop();
         }

@@ -69,13 +69,17 @@ include CMakeFiles/led_simulator.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/led_simulator.dir/flags.make
 
+Bonnaroo.cpp: /Users/orvyx/Documents/Arduino/Bonnaroo/Bonnaroo.ino
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Copying Bonnaroo.ino to Bonnaroo.cpp"
+	/opt/homebrew/bin/cmake -E copy_if_different /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../Bonnaroo.ino /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/Bonnaroo.cpp
+
 CMakeFiles/led_simulator.dir/codegen:
 .PHONY : CMakeFiles/led_simulator.dir/codegen
 
 CMakeFiles/led_simulator.dir/main.cpp.o: CMakeFiles/led_simulator.dir/flags.make
 CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/main.cpp
 CMakeFiles/led_simulator.dir/main.cpp.o: CMakeFiles/led_simulator.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/led_simulator.dir/main.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/led_simulator.dir/main.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/led_simulator.dir/main.cpp.o -MF CMakeFiles/led_simulator.dir/main.cpp.o.d -o CMakeFiles/led_simulator.dir/main.cpp.o -c /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/main.cpp
 
 CMakeFiles/led_simulator.dir/main.cpp.i: cmake_force
@@ -89,7 +93,7 @@ CMakeFiles/led_simulator.dir/main.cpp.s: cmake_force
 CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o: CMakeFiles/led_simulator.dir/flags.make
 CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o: Bonnaroo.cpp
 CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o: CMakeFiles/led_simulator.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o -MF CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o.d -o CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o -c /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/Bonnaroo.cpp
 
 CMakeFiles/led_simulator.dir/Bonnaroo.cpp.i: cmake_force
@@ -103,7 +107,7 @@ CMakeFiles/led_simulator.dir/Bonnaroo.cpp.s: cmake_force
 CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.o: CMakeFiles/led_simulator.dir/flags.make
 CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp
 CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.o: CMakeFiles/led_simulator.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.o -MF CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.o.d -o CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.o -c /Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp
 
 CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.i: cmake_force
@@ -128,8 +132,9 @@ led_simulator: CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o
 led_simulator: CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp.o
 led_simulator: CMakeFiles/led_simulator.dir/build.make
 led_simulator: /opt/homebrew/Cellar/sdl2/2.32.10/lib/libSDL2.dylib
+led_simulator: /opt/homebrew/lib/libSDL2_ttf.dylib
 led_simulator: CMakeFiles/led_simulator.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable led_simulator"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable led_simulator"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/led_simulator.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -140,7 +145,7 @@ CMakeFiles/led_simulator.dir/clean:
 	$(CMAKE_COMMAND) -P CMakeFiles/led_simulator.dir/cmake_clean.cmake
 .PHONY : CMakeFiles/led_simulator.dir/clean
 
-CMakeFiles/led_simulator.dir/depend:
+CMakeFiles/led_simulator.dir/depend: Bonnaroo.cpp
 	cd /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/orvyx/Documents/Arduino/Bonnaroo/simulator /Users/orvyx/Documents/Arduino/Bonnaroo/simulator /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles/led_simulator.dir/DependInfo.cmake "--color=$(COLOR)" led_simulator
 .PHONY : CMakeFiles/led_simulator.dir/depend
 
