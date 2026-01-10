@@ -21,7 +21,7 @@
 #include "mocks/SD.h"
 #include "mocks/MatrixHardware_Teensy4_ShieldV5.h"
 #include "mocks/IRremote.hpp"
-#include "mocks/GifDecoder.h"
+#include <GifDecoder.h>
 
 // Generic SmartMatrix Layer header (from real library)
 #include "Layer.h"

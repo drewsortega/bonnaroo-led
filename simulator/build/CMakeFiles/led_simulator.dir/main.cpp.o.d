@@ -888,6 +888,8 @@ CMakeFiles/led_simulator.dir/main.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_filesec_t.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/MatrixHardware_Teensy4_ShieldV5.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/Layer.h \
-  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/../../libraries/SmartMatrix/src/MatrixCommon.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixCommon.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/IRremote.hpp \
-  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/GifDecoder.h
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/GifDecoder/src/GifDecoder.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/AnimatedGIF/src/AnimatedGIF.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/GifDecoder/src/GifDecoder_Impl.h

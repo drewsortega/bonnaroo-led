@@ -15,6 +15,7 @@
 #include <chrono>
 #include <thread>
 #include <string>
+#include <cstdarg>
 
 // Arduino types
 typedef uint8_t byte;
@@ -175,6 +176,17 @@ public:
     
     int available() { return 0; }
     int read() { return -1; }
+
+    void printf(const char* format, ...) {
+        va_list args;
+        va_start(args, format);
+        vprintf(format, args);
+        va_end(args);
+    }
+
+    void flush() {
+        fflush(stdout);
+    }
 };
 
 extern SerialClass Serial;

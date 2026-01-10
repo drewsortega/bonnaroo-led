@@ -830,30 +830,32 @@ CMakeFiles/led_simulator.dir/Bonnaroo.cpp.o: Bonnaroo.cpp \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stddef.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/CircularBuffer_SM.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer_Background.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer_Background_Impl.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer_Indexed.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer_Indexed_Impl.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer_Scrolling.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer_Scrolling_Impl.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixCommon.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixCommonApa102.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixCommonApa102Calc.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixCommonApa102Refresh.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixCommonHub75.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFontCommon.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixPanelMaps.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/SmartMatrix.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/gimpbitmap.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/bitmaps/bm_ariel_dance.c \
   /Users/orvyx/Documents/Arduino/Bonnaroo/bitmaps/bm_brat.c \
   /Users/orvyx/Documents/Arduino/Bonnaroo/bitmaps/bm_surprised_pikachu.c \
   /Users/orvyx/Documents/Arduino/Bonnaroo/gimpbitmap.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/AnimatedGIF/src/AnimatedGIF.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/GifDecoder/src/GifDecoder.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/GifDecoder/src/GifDecoder_Impl.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/CircularBuffer_SM.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer_Background.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer_Background_Impl.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer_Indexed.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer_Indexed_Impl.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer_Scrolling.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer_Scrolling_Impl.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixCommon.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixCommonApa102.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixCommonApa102Calc.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixCommonApa102Refresh.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixCommonHub75.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixFontCommon.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixPanelMaps.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/SmartMatrix.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/Arduino.h \
-  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/GifDecoder.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/IRremote.hpp \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/Layer.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/MatrixHardware_Teensy4_ShieldV5.h \
@@ -1728,7 +1730,110 @@ CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunc
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/SD.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/SPI.h
 
-CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c \
+CMakeFiles/led_simulator.dir/libs/AnimatedGIF/src/AnimatedGIF.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/AnimatedGIF/src/AnimatedGIF.cpp \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/Availability.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/AvailabilityInternalLegacy.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/AvailabilityVersions.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_abort.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_bounds.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_ctermid.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_printf.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdlib.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_string.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_strings.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_intmax_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint64_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint8_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uintmax_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/alloca.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_endian.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_mcontext.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_types.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/endian.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/signal.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/types.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__config \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__config_site \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__configuration/abi.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__configuration/availability.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__configuration/compiler.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__configuration/language.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__configuration/platform.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdint.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdio.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdlib.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/string.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/libkern/_OSByteOrder.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/libkern/arm/_OSByteOrder.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/mach/arm/_structs.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/mach/machine/_structs.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/machine/_endian.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/machine/_mcontext.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/machine/_types.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/machine/endian.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/machine/signal.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/machine/types.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/malloc/_malloc.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/malloc/_malloc_type.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/malloc/_ptrcheck.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdint.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdio.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/__endian.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_endian.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_posix_availability.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_attr_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_symbol_aliasing.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_ct_rune_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_dev_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_errno_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_id_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_int16_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_int32_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_int64_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_int8_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_intptr_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_mode_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_null.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_off_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_pid_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_rsize_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_rune_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_seek_set.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_sigaltstack.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_sigset_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_size_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_ssize_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_timeval.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_int16_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_int32_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_int64_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_int8_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_ucontext.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_uid_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_uintptr_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_va_list.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_wchar_t.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/appleapiopts.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/cdefs.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/resource.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/signal.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/stdio.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/wait.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/ptrcheck.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/AnimatedGIF/src/AnimatedGIF.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/AnimatedGIF/src/gif.inl
+
+CMakeFiles/led_simulator.dir/libs/SmartMatrix/src/Font_apple4x6_256.c.o: /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Font_apple4x6_256.c \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_intmax_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h \
@@ -1761,9 +1866,9 @@ CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/ptrcheck.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFontCommon.h
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixFontCommon.h
 
-CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c \
+CMakeFiles/led_simulator.dir/libs/SmartMatrix/src/Font_apple5x7_256.c.o: /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Font_apple5x7_256.c \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_intmax_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h \
@@ -1796,9 +1901,9 @@ CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/ptrcheck.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFontCommon.h
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixFontCommon.h
 
-CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c \
+CMakeFiles/led_simulator.dir/libs/SmartMatrix/src/Font_apple6x10.c.o: /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Font_apple6x10.c \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_intmax_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h \
@@ -1831,9 +1936,9 @@ CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/ptrcheck.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFontCommon.h
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixFontCommon.h
 
-CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c \
+CMakeFiles/led_simulator.dir/libs/SmartMatrix/src/Font_apple8x13.c.o: /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Font_apple8x13.c \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_intmax_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h \
@@ -1866,9 +1971,9 @@ CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/ptrcheck.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFontCommon.h
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixFontCommon.h
 
-CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c \
+CMakeFiles/led_simulator.dir/libs/SmartMatrix/src/Font_gohufont6x11.c.o: /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Font_gohufont6x11.c \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_intmax_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h \
@@ -1901,9 +2006,9 @@ CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/ptrcheck.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFontCommon.h
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixFontCommon.h
 
-CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c \
+CMakeFiles/led_simulator.dir/libs/SmartMatrix/src/Font_gohufont6x11b.c.o: /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Font_gohufont6x11b.c \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_intmax_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h \
@@ -1936,9 +2041,9 @@ CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/ptrcheck.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFontCommon.h
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixFontCommon.h
 
-CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp \
+CMakeFiles/led_simulator.dir/libs/SmartMatrix/src/Layer.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer.cpp \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_intmax_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h \
@@ -1969,10 +2074,10 @@ CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/cdefs.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/ptrcheck.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixCommon.h
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixCommon.h
 
-CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp.o: /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp \
+CMakeFiles/led_simulator.dir/libs/SmartMatrix/src/MatrixFont.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixFont.cpp \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_intmax_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h \
@@ -2005,7 +2110,7 @@ CMakeFiles/led_simulator.dir/Users/orvyx/Documents/Arduino/libraries/SmartMatrix
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/ptrcheck.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFontCommon.h
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixFontCommon.h
 
 CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/main.cpp \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/Availability.h \
@@ -2837,9 +2942,11 @@ CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdarg.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stddef.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h \
-  /Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixCommon.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/AnimatedGIF/src/AnimatedGIF.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/GifDecoder/src/GifDecoder.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/GifDecoder/src/GifDecoder_Impl.h \
+  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixCommon.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/Arduino.h \
-  /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/GifDecoder.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/IRremote.hpp \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/Layer.h \
   /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/MatrixHardware_Teensy4_ShieldV5.h \
@@ -2914,15 +3021,21 @@ CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_assert.h:
 
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFont.cpp:
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer.cpp:
 
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11b.c:
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Font_gohufont6x11b.c:
 
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple8x13.c:
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Font_apple8x13.c:
 
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple6x10.c:
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Font_apple6x10.c:
 
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple5x7_256.c:
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Font_apple5x7_256.c:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Font_apple4x6_256.c:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/AnimatedGIF/src/gif.inl:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/AnimatedGIF/src/AnimatedGIF.cpp:
 
 /Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.cpp:
 
@@ -2992,9 +3105,35 @@ CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo
 
 /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/IRremote.hpp:
 
-/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/GifDecoder.h:
-
 /Users/orvyx/Documents/Arduino/Bonnaroo/simulator/mocks/Arduino.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/SmartMatrix.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixCommonHub75.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixCommonApa102Refresh.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixCommonApa102Calc.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixCommonApa102.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer_Scrolling.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixCommon.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer_Indexed_Impl.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer_Indexed.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer_Background_Impl.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/CircularBuffer_SM.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/GifDecoder/src/GifDecoder_Impl.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/GifDecoder/src/GifDecoder.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/AnimatedGIF/src/AnimatedGIF.h:
 
 /Users/orvyx/Documents/Arduino/Bonnaroo/bitmaps/bm_brat.c:
 
@@ -3003,32 +3142,6 @@ CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo
 /Users/orvyx/Documents/Arduino/Bonnaroo/gimpbitmap.h:
 
 /Users/orvyx/Documents/Arduino/Bonnaroo/FilenameFunctions.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_apple4x6_256.c:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixPanelMaps.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixFontCommon.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixCommonHub75.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixCommonApa102Calc.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixCommon.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer_Scrolling.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer_Indexed_Impl.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer_Indexed.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer_Background_Impl.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer_Background.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/CircularBuffer_SM.h:
 
 /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stddef.h:
 
@@ -3045,8 +3158,6 @@ CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo
 /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stddef_wchar_t.h:
 
 /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stddef_rsize_t.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixCommonApa102.h:
 
 /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stddef_ptrdiff_t.h:
 
@@ -3394,8 +3505,6 @@ CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__utility/exception_guard.h:
 
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/MatrixCommonApa102Refresh.h:
-
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__utility/declval.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__utility/convert_to_integral.h:
@@ -3461,6 +3570,8 @@ CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo
 /opt/homebrew/Cellar/sdl2/2.32.10/include/SDL2/SDL_audio.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_unsigned_integer.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixFontCommon.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_trivially_relocatable.h:
 
@@ -3616,6 +3727,8 @@ CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_static_assert.h:
 
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer.h:
+
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/common_reference.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__atomic/atomic_flag.h:
@@ -3637,6 +3750,8 @@ CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/add_rvalue_reference.h:
 
 /opt/homebrew/Cellar/sdl2/2.32.10/include/SDL2/SDL_sensor.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer_Scrolling_Impl.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_array.h:
 
@@ -3801,8 +3916,6 @@ CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/max.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory/allocation_guard.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer_Scrolling_Impl.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory/pointer_traits.h:
 
@@ -4036,8 +4149,6 @@ CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/runetype.h:
 
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Layer.cpp:
-
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_locale.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/reverse_iterator.h:
@@ -4101,8 +4212,6 @@ CMakeFiles/led_simulator.dir/main.cpp.o: /Users/orvyx/Documents/Arduino/Bonnaroo
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_wctype.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/extended_grapheme_cluster_table.h:
-
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/Font_gohufont6x11.c:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/concepts.h:
 
@@ -4197,6 +4306,8 @@ Bonnaroo.cpp:
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_mcontext.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/indic_conjunct_break_table.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Font_gohufont6x11.c:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__concepts/derived_from.h:
 
@@ -4442,6 +4553,8 @@ Bonnaroo.cpp:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/exception:
 
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/Layer_Background.h:
+
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/swap_ranges.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__concepts/convertible_to.h:
@@ -4662,8 +4775,6 @@ Bonnaroo.cpp:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_volatile.h:
 
-/Users/orvyx/Documents/Arduino/libraries/SmartMatrix/src/SmartMatrix.h:
-
 /Library/Developer/CommandLineTools/usr/lib/clang/17/include/__stdarg_va_list.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__tuple/tuple_like_ext.h:
@@ -4687,6 +4798,8 @@ Bonnaroo.cpp:
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_wctype_t.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixPanelMaps.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_rwlockattr_t.h:
 
@@ -4725,6 +4838,8 @@ Bonnaroo.cpp:
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/weak_result_type.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/binder2nd.h:
+
+/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/libs/SmartMatrix/src/MatrixFont.cpp:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/lazy.h:
 
