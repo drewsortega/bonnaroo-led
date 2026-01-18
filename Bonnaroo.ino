@@ -33,12 +33,21 @@
  */
 
 
-#include <GifDecoder.h>
-#include <IRremote.hpp>
-#include <MatrixHardware_Teensy4_ShieldV5.h>        // SmartLED Shield for Teensy 4 (V5)
-#include <SD.h>
-#include <SPI.h>
-#include <SmartMatrix.h>
+#ifdef SIMULATOR_MODE
+  #include <GifDecoder.h>
+  #include <IRremote.hpp>
+  #include <MatrixHardware_Teensy4_ShieldV5.h>
+  #include <SD.h>
+  #include <SPI.h>
+  #include <SmartMatrix.h>
+#else
+  #include "src/GifDecoder/src/GifDecoder.h"
+  #include <IRremote.hpp>
+  #include "src/SmartMatrix/src/MatrixHardware_Teensy4_ShieldV5.h"        // SmartLED Shield for Teensy 4 (V5)
+  #include <SD.h>
+  #include <SPI.h>
+  #include "src/SmartMatrix/src/SmartMatrix.h"
+#endif
 
 #include "gimpbitmap.h"
 

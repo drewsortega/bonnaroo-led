@@ -1,0 +1,50 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Simulator build artifacts
+simulator/build/
+
+# Arduino IDE cache/build artifacts
+*.elf
+*.hex
+*.bin
+*.eep
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# IDE and editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Debug logs (keep specific ones if needed, but generally ignore)
+*.log
+final_log*.txt
+
+# Compiled object files
+*.o
+*.obj
+
+# Backup files
+*.bak
+*.orig
+
+# Thumbnails and previews
+Thumbs.db
+ehthumbs.db

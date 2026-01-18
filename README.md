@@ -16,8 +16,12 @@ This project includes a fully functional desktop simulator allowing you to run a
 
 ### Features
 - **Visualizes the LED Grid**: Uses SDL2 to render the 64x64 matrix on your screen.
-- **Compiles Real Code**: Compiles `Bonnaroo.ino` directly, mocking the hardware interfaces (`SmartMatrix`, `SD`, `IRRemote`).
-- **Self-Contained**: Includes a patched, vendored copy of the SmartMatrix library in `simulator/libs/SmartMatrix`. No external library installation is required to run the simulator.
+- **Compiles Real Code**: Compiles `Bonnaroo.ino` directly, mocking the hardware interfaces (`SD`, `IRRemote`).
+- **Vendored Libraries**: All core libraries are vendored in `src/`:
+  - `src/SmartMatrix/` - LED matrix driver library (patched for simulator compatibility)
+  - `src/AnimatedGIF/` - GIF decoder library
+  - `src/GifDecoder/` - GIF decoder wrapper
+- **Same Code for Hardware and Simulator**: Uses `#ifdef SIMULATOR_MODE` to switch includes between mocked and real hardware headers.
 - **GIF Playback**: Reads GIFs from the local `gifs/` directory, identical to SD card behavior.
 
 ### Controls

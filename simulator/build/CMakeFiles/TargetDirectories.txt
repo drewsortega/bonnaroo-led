@@ -1,3 +1,0 @@
-/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles/led_simulator.dir
-/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles/edit_cache.dir
-/Users/orvyx/Documents/Arduino/Bonnaroo/simulator/build/CMakeFiles/rebuild_cache.dir
