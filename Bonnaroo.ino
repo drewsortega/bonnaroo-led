@@ -397,21 +397,21 @@ void HandleBLEInputs(unsigned long now) {
             Serial.println("]");
 
             // Check if the string in 'buf' exactly matches our commands
-            if (strcmp(buf, "down") == 0) {
+            if (strcmp(buf, "brtdown") == 0) {
                 adjustBrightness(-26);
                 strcat(buf, "BRT: ");
                 strcat(buf, String(brightness).c_str());
             } 
-            else if (strcmp(buf, "up") == 0) {
+            else if (strcmp(buf, "brtup") == 0) {
                 adjustBrightness(26);
                 strcat(buf, "BRT: ");
                 strcat(buf, String(brightness).c_str());
             } 
             // Assuming you want the text "left" and "right" via Bluetooth
-            else if (strcmp(buf, "left") == 0) {
+            else if (strcmp(buf, "prev") == 0) {
                 change_image_idx(-1);
             } 
-            else if (strcmp(buf, "right") == 0) {
+            else if (strcmp(buf, "next") == 0) {
                 change_image_idx(1);
             } 
             else {
