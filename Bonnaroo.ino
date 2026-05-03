@@ -33,6 +33,9 @@
  */
 
 
+#define SUPPRESS_ERROR_MESSAGE_FOR_BEGIN
+
+
 #ifdef SIMULATOR_MODE
   #include <GifDecoder.h>
   #include <IRremote.hpp>
@@ -200,7 +203,7 @@ void maybeClearDebugScreen(unsigned long now) {
 
 // Writes debug string text. If end == true, clears
 // debug text after a few seconds of no changes.
-void writeDebugScreen(char text[], unsigned long now, bool allow_clear = true) {
+void writeDebugScreen(const char* text, unsigned long now, bool allow_clear = true) {
     allow_debug_clear = allow_clear;
     indexedLayer.fillScreen(0);
     indexedLayer.setIndexedColor(1, COLOR_BLACK);
@@ -215,7 +218,7 @@ void writeDebugScreen(char text[], unsigned long now, bool allow_clear = true) {
     last_debug_write_time = now;
 }
 
-bool validatePressAndGetName(IRRawDataType button, char* buf) {
+bool validatePressAndGetName(uint32_t button, char* buf) {
     switch(button) {
         case BUT_VOL_DOWN:
             strcat(buf, "VOL_DOWN");
@@ -328,7 +331,7 @@ void HandleIRInputs(unsigned long now) {
         return;
     }
 
-    IRRawDataType received_data = IrReceiver.decodedIRData.decodedRawData;
+    uint32_t received_data = IrReceiver.decodedIRData.decodedRawData;
     if (!validatePressAndGetName(received_data, button_name)){
         // Throw out invalid input for invalid reads.
         IrReceiver.resume(); // Receive the next value.
