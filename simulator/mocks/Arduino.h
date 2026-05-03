@@ -176,6 +176,8 @@ public:
     
     int available() { return 0; }
     int read() { return -1; }
+    size_t write(const char *buf) { printf("%s", buf); return strlen(buf); }
+    int readBytesUntil(char terminator, char *buffer, size_t length) { return 0; }
 
     void printf(const char* format, ...) {
         va_list args;
@@ -190,6 +192,7 @@ public:
 };
 
 extern SerialClass Serial;
+extern SerialClass Serial5;
 
 // Pin functions (no-ops for simulator)
 inline void pinMode(uint8_t pin, uint8_t mode) {

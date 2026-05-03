@@ -58,6 +58,14 @@
 #include "bitmaps/bm_brat.c"
 #include "bitmaps/bm_surprised_pikachu.c"
 
+#include "SnakeGame.h"
+
+enum AppMode {
+    MODE_GIF,
+    MODE_SNAKE
+};
+static AppMode current_mode = MODE_GIF;
+
 // GIF Bitmaps.
 #include "bitmaps/bm_ariel_dance.c"
 const uint8_t * gifsList[] = { bm_ariel_dance };
@@ -415,19 +423,27 @@ void HandleBLEInputs(unsigned long now) {
                 change_image_idx(1);
             }
             else if (strcmp(buf, "menu") == 0) {
-                writeDebugScreen(buf, now);
+                if (current_mode == MODE_GIF) {
+                    current_mode = MODE_SNAKE;
+                    snakeInit();
+                    writeDebugScreen("SNAKE", now);
+                } else {
+                    current_mode = MODE_GIF;
+                    is_first_frame = true;
+                    writeDebugScreen("GIF", now);
+                }
             }
             else if (strcmp(buf, "l") == 0) {
-                writeDebugScreen(buf, now);
+                snakeSetDirection(-1, 0);
             }
             else if (strcmp(buf, "r") == 0) {
-                writeDebugScreen(buf, now);
+                snakeSetDirection(1, 0);
             }
             else if (strcmp(buf, "u") == 0) {
-                writeDebugScreen(buf, now);
+                snakeSetDirection(0, -1);
             }
             else if (strcmp(buf, "d") == 0) {
-                writeDebugScreen(buf, now);
+                snakeSetDirection(0, 1);
             }
             else {
                 // If it doesn't match any known command, just print the text
@@ -656,10 +672,14 @@ void loop() {
 
     HandleBLEInputs(now);
 
-    if (!use_sd) {
-        drawImageNoSD(now);
+    if (current_mode == MODE_SNAKE) {
+        snakeLoop(now);
     } else {
-        drawImageWithSD(now);
+        if (!use_sd) {
+            drawImageNoSD(now);
+        } else {
+            drawImageWithSD(now);
+        }
     }
     is_first_frame = false;
 }

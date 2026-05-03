@@ -28,6 +28,7 @@
 
 // Global instances for mocks
 SerialClass Serial;
+SerialClass Serial5;
 SPIClass SPI;
 SPIClass SPI1;
 SDClass SD;
