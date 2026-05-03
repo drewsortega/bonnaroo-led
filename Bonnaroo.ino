@@ -375,6 +375,55 @@ void HandleIRInputs(unsigned long now) {
     IrReceiver.resume(); // Receive the next value
 }
 
+void HandleBLEInputs(unsigned long now) {
+    if (Serial5.available() > 0) {
+        char buf[300];
+        buf[0] = 0;
+
+        // Let's see if it's receiving ANY bytes at all
+        Serial.println("Incoming BLE data detected..."); 
+
+        int read_total = Serial5.readBytesUntil('!', buf, 299);
+
+        Serial.print("Bytes read: ");
+        Serial.println(read_total);
+
+        if (read_total > 0) {
+            buf[read_total] = '\0';
+
+            // Print the exact string to your laptop console
+            Serial.print("Decoded String: [");
+            Serial.print(buf);
+            Serial.println("]");
+
+            // Check if the string in 'buf' exactly matches our commands
+            if (strcmp(buf, "down") == 0) {
+                adjustBrightness(-26);
+                strcat(buf, "BRT: ");
+                strcat(buf, String(brightness).c_str());
+            } 
+            else if (strcmp(buf, "up") == 0) {
+                adjustBrightness(26);
+                strcat(buf, "BRT: ");
+                strcat(buf, String(brightness).c_str());
+            } 
+            // Assuming you want the text "left" and "right" via Bluetooth
+            else if (strcmp(buf, "left") == 0) {
+                change_image_idx(-1);
+            } 
+            else if (strcmp(buf, "right") == 0) {
+                change_image_idx(1);
+            } 
+            else {
+                // If it doesn't match any known command, just print the text
+                writeDebugScreen(buf, now);
+            }
+
+            Serial5.write(buf);
+        }
+    }
+}
+
 void drawBitmap64(int16_t x, int16_t y, const gimp64x64bitmap* bitmap) {
   for(unsigned int i=0; i < bitmap->height; i++) {
     for(unsigned int j=0; j < bitmap->width; j++) {
@@ -506,7 +555,11 @@ void setup() {
     // NOTE: new callback function required after we moved to using the external AnimatedGIF library to decode GIFs
     decoder.setFileSizeCallback(fileSizeCallback);
 
+    // USB communication
     Serial.begin(115200);
+
+    // BluetoothLE communication
+    Serial5.begin(9600);
 
     // give time for USB Serial to be ready
     delay(1000);
@@ -585,6 +638,8 @@ void loop() {
     maybeClearDebugScreen(now);
 
     HandleIRInputs(now);
+
+    HandleBLEInputs(now);
 
     if (!use_sd) {
         drawImageNoSD(now);
