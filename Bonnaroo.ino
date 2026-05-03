@@ -413,7 +413,22 @@ void HandleBLEInputs(unsigned long now) {
             } 
             else if (strcmp(buf, "next") == 0) {
                 change_image_idx(1);
-            } 
+            }
+            else if (strcmp(buf, "menu") == 0) {
+                writeDebugScreen(buf, now);
+            }
+            else if (strcmp(buf, "l") == 0) {
+                writeDebugScreen(buf, now);
+            }
+            else if (strcmp(buf, "r") == 0) {
+                writeDebugScreen(buf, now);
+            }
+            else if (strcmp(buf, "u") == 0) {
+                writeDebugScreen(buf, now);
+            }
+            else if (strcmp(buf, "d") == 0) {
+                writeDebugScreen(buf, now);
+            }
             else {
                 // If it doesn't match any known command, just print the text
                 writeDebugScreen(buf, now);
