@@ -1,8 +1,7 @@
 #include "PacmanGame.h"
 #include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 #include <SD.h>
+#include "Leaderboard.h"
 
 extern void screenClearCallback(void);
 extern void updateScreenCallback(void);
@@ -61,15 +60,8 @@ struct Ghost {
     int scatter_target_x, scatter_target_y, spawn_x, spawn_y, exit_timer;
 };
 
-struct LeaderboardEntry {
-    char name[4];
-    int score;
-};
-
 static Pacman pac;
 static Ghost ghosts[4];
-static LeaderboardEntry lb[5];
-static bool lb_loaded = false;
 
 static unsigned long state_timer = 0;
 static GameState game_state = STATE_INTRO;
@@ -84,152 +76,18 @@ static bool global_chase_mode = false;
 static int eaten_score = 200;
 static bool pac_has_sd = false;
 
-static const uint8_t font3x5[16][15] = {
-    {1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1}, // 0
-    {0,1,0, 1,1,0, 0,1,0, 0,1,0, 1,1,1}, // 1
-    {1,1,1, 0,0,1, 1,1,1, 1,0,0, 1,1,1}, // 2
-    {1,1,1, 0,0,1, 1,1,1, 0,0,1, 1,1,1}, // 3
-    {1,0,1, 1,0,1, 1,1,1, 0,0,1, 0,0,1}, // 4
-    {1,1,1, 1,0,0, 1,1,1, 0,0,1, 1,1,1}, // 5
-    {1,1,1, 1,0,0, 1,1,1, 1,0,1, 1,1,1}, // 6
-    {1,1,1, 0,0,1, 0,1,0, 0,1,0, 0,1,0}, // 7
-    {1,1,1, 1,0,1, 1,1,1, 1,0,1, 1,1,1}, // 8
-    {1,1,1, 1,0,1, 1,1,1, 0,0,1, 1,1,1}, // 9
-    {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0}, // 10
-    {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0}, // 11
-    {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0}, // 12
-    {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0}, // 13
-    {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0}, // 14
-    {0,1,0, 0,1,0, 0,1,0, 0,0,0, 0,1,0}  // 15 = !
-};
-
-static const uint8_t font_alpha[26][15] = {
-    {1,1,1, 1,0,1, 1,1,1, 1,0,1, 1,0,1}, // A
-    {1,1,0, 1,0,1, 1,1,0, 1,0,1, 1,1,0}, // B
-    {1,1,1, 1,0,0, 1,0,0, 1,0,0, 1,1,1}, // C
-    {1,1,0, 1,0,1, 1,0,1, 1,0,1, 1,1,0}, // D
-    {1,1,1, 1,0,0, 1,1,1, 1,0,0, 1,1,1}, // E
-    {1,1,1, 1,0,0, 1,1,1, 1,0,0, 1,0,0}, // F
-    {1,1,1, 1,0,0, 1,0,1, 1,0,1, 1,1,1}, // G
-    {1,0,1, 1,0,1, 1,1,1, 1,0,1, 1,0,1}, // H
-    {1,1,1, 0,1,0, 0,1,0, 0,1,0, 1,1,1}, // I
-    {0,0,1, 0,0,1, 0,0,1, 1,0,1, 1,1,1}, // J
-    {1,0,1, 1,0,1, 1,1,0, 1,0,1, 1,0,1}, // K
-    {1,0,0, 1,0,0, 1,0,0, 1,0,0, 1,1,1}, // L
-    {1,1,1, 1,1,1, 1,0,1, 1,0,1, 1,0,1}, // M
-    {1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,0,1}, // N
-    {1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1}, // O
-    {1,1,1, 1,0,1, 1,1,1, 1,0,0, 1,0,0}, // P
-    {1,1,1, 1,0,1, 1,0,1, 1,1,1, 0,0,1}, // Q
-    {1,1,1, 1,0,1, 1,1,0, 1,0,1, 1,0,1}, // R
-    {1,1,1, 1,0,0, 1,1,1, 0,0,1, 1,1,1}, // S
-    {1,1,1, 0,1,0, 0,1,0, 0,1,0, 0,1,0}, // T
-    {1,0,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1}, // U
-    {1,0,1, 1,0,1, 1,0,1, 1,0,1, 0,1,0}, // V
-    {1,0,1, 1,0,1, 1,0,1, 1,1,1, 1,1,1}, // W
-    {1,0,1, 1,0,1, 0,1,0, 1,0,1, 1,0,1}, // X
-    {1,0,1, 1,0,1, 1,1,1, 0,1,0, 0,1,0}, // Y
-    {1,1,1, 0,0,1, 0,1,0, 1,0,0, 1,1,1}  // Z
-};
-
-static void drawChar(int x, int y, char c, uint8_t r, uint8_t g, uint8_t b) {
-    if (c >= 'a' && c <= 'z') c -= 32;
-    if (c >= 'A' && c <= 'Z') {
-        int idx = c - 'A';
-        for(int dy=0; dy<5; dy++) {
-            for(int dx=0; dx<3; dx++) {
-                if(font_alpha[idx][dy*3+dx]) drawPixelCallback(x+dx, y+dy, r, g, b);
-            }
-        }
-    } else if (c >= '0' && c <= '9') {
-        int idx = c - '0';
-        for(int dy=0; dy<5; dy++) {
-            for(int dx=0; dx<3; dx++) {
-                if(font3x5[idx][dy*3+dx]) drawPixelCallback(x+dx, y+dy, r, g, b);
-            }
-        }
-    } else if (c == '!') {
-        for(int dy=0; dy<5; dy++) {
-            for(int dx=0; dx<3; dx++) {
-                if(font3x5[15][dy*3+dx]) drawPixelCallback(x+dx, y+dy, r, g, b);
-            }
-        }
-    }
-}
+// Fonts moved to Leaderboard.cpp
+// drawChar replaced by lbDrawChar
 
 static void drawString(int x, int y, const char* str, uint8_t r, uint8_t g, uint8_t b) {
-    while(*str) {
-        if (*str != ' ') drawChar(x, y, *str, r, g, b);
-        x += 4;
-        str++;
-    }
+    lbDrawString(x, y, str, r, g, b);
 }
 
 static void drawNumber(int x, int y, int num, uint8_t r, uint8_t g, uint8_t b) {
-    if (num == 0) {
-        drawChar(x, y, '0', r, g, b);
-        return;
-    }
-    int digits[10];
-    int count = 0;
-    while(num > 0) {
-        digits[count++] = num % 10;
-        num /= 10;
-    }
-    for(int i=count-1; i>=0; i--) {
-        drawChar(x, y, '0' + digits[i], r, g, b);
-        x += 4;
-    }
+    lbDrawNumber(x, y, num, r, g, b);
 }
 
-static void loadLeaderboard() {
-    if (lb_loaded) return;
-    for(int i=0; i<5; i++) {
-        strcpy(lb[i].name, "---");
-        lb[i].score = 0;
-    }
-    lb_loaded = true;
-    if (!pac_has_sd) return;
-    
-    File f = SD.open("pac_lb.txt", FILE_READ);
-    if (f) {
-        for(int i=0; i<5; i++) {
-            char buf[32];
-            int idx = 0;
-            while(f.available()) {
-                char c = f.read();
-                if (c == '\n' || idx >= 31) { buf[idx] = 0; break; }
-                if (c != '\r') buf[idx++] = c;
-            }
-            if (idx == 0) break;
-            char* space = strchr(buf, ' ');
-            if (space) {
-                *space = 0;
-                strncpy(lb[i].name, buf, 3);
-                lb[i].name[3] = 0;
-                lb[i].score = atoi(space+1);
-            }
-        }
-        f.close();
-    }
-}
-
-static void saveLeaderboard() {
-    if (!pac_has_sd) return;
-    if (SD.exists("pac_lb.txt")) {
-        SD.remove("pac_lb.txt");
-    }
-    File f = SD.open("pac_lb.txt", FILE_WRITE);
-    if (f) {
-        for(int i=0; i<5; i++) {
-            f.print(lb[i].name);
-            f.print(" ");
-            f.println(lb[i].score);
-        }
-        f.close();
-    }
-}
-
+// Leaderboard logic moved to Leaderboard.cpp
 static void resetLevel(bool full_reset) {
     if (full_reset) {
         total_dots = 0;
@@ -293,29 +151,7 @@ void pacmanSetDirection(int dx, int dy) {
 }
 
 void pacmanHandleText(const char* text) {
-    if (game_state == STATE_ENTER_NAME) {
-        char name[4] = "---";
-        strncpy(name, text, 3);
-        name[3] = '\0';
-        
-        for(int i=0; i<3; i++) {
-            if (name[i] >= 'a' && name[i] <= 'z') name[i] -= 32;
-        }
-        
-        for(int i=0; i<5; i++) {
-            if (score > lb[i].score) {
-                for(int j=4; j>i; j--) {
-                    lb[j] = lb[j-1];
-                }
-                strcpy(lb[i].name, name);
-                lb[i].score = score;
-                break;
-            }
-        }
-        saveLeaderboard();
-        game_state = STATE_LEADERBOARD;
-        state_timer = 0;
-    }
+    // Handled by lbHandleText
 }
 
 static bool isWall(int x, int y, bool isGhost, bool isEaten) {
@@ -333,32 +169,26 @@ static int distanceSq(int x1, int y1, int x2, int y2) {
     return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
 }
 
-static bool was_in_top_5 = false;
+// (unused was_in_top_5 removed)
 
 void pacmanLoop(unsigned long now) {
     if (game_state == STATE_GAMEOVER) {
         if (state_timer > 0 && now - state_timer > 3000) {
-            loadLeaderboard();
-            if (score > lb[4].score) {
-                was_in_top_5 = true;
-                game_state = STATE_ENTER_NAME;
-            } else {
-                was_in_top_5 = false;
-                game_state = STATE_LEADERBOARD;
-                state_timer = now;
-            }
+            lbStart("pac_lb.txt", score, [](){
+                score = 0;
+                lives = 3;
+                resetLevel(true);
+                game_state = STATE_INTRO;
+                state_timer = millis();
+                last_move_time = 0;
+                ghost_last_move_time = 0;
+            });
+            game_state = STATE_LEADERBOARD; // Actually just handled by lbLoop
         }
-    } else if (game_state == STATE_ENTER_NAME) {
-        // Handled via pacmanHandleText, wait indefinitely
-    } else if (game_state == STATE_LEADERBOARD) {
-        if (state_timer == 0) state_timer = now;
-        if (now - state_timer > 8000) {
-            score = 0;
-            lives = 3;
-            resetLevel(true);
-            game_state = STATE_INTRO;
-            state_timer = now;
-        }
+        return;
+    } else if (game_state == STATE_ENTER_NAME || game_state == STATE_LEADERBOARD) {
+        lbLoop(now);
+        return;
     } else if (game_state == STATE_INTRO) {
         if (state_timer == 0) state_timer = now;
         if (now - state_timer > 2500) {
@@ -559,26 +389,9 @@ void pacmanLoop(unsigned long now) {
     // DRAWING
     screenClearCallback();
     
-    if (game_state == STATE_ENTER_NAME) {
-        drawString(10, 10, "NEW HIGH SCORE", 255, 255, 0);
-        drawString(10, 30, "ENTER NAME", 255, 255, 255);
-        drawString(10, 40, "VIA BLE", 255, 255, 255);
-        drawNumber(20, 50, score, 0, 255, 255);
-    } else if (game_state == STATE_LEADERBOARD) {
-        drawString(12, 2, "TOP SCORES", 255, 255, 0);
-        for(int i=0; i<5; i++) {
-            int ry = 14 + i * 8;
-            drawString(8, ry, lb[i].name, 255, 255, 255);
-            drawNumber(28, ry, lb[i].score, 0, 255, 255);
-        }
-        if (!was_in_top_5) {
-            // Draw a horizontal separator line
-            for(int i=4; i<60; i+=2) {
-                drawPixelCallback(i, 54, 150, 150, 150);
-            }
-            drawString(2, 57, "YOUR SCORE", 255, 0, 0);
-            drawNumber(44, 57, score, 0, 255, 255);
-        }
+    if (game_state == STATE_ENTER_NAME || game_state == STATE_LEADERBOARD) {
+        // Handled by lbLoop
+        return;
     } else {
         // Draw Score
         drawNumber(4, 0, score, 255, 255, 255);
@@ -647,15 +460,15 @@ void pacmanLoop(unsigned long now) {
             }
         }
         
-        // Draw "READY!" or Game Over
+        // Draw "GET READY" or Game Over
         if (game_state == STATE_INTRO) {
-            int rx = OFFSET_X + 10 * TILE_S - 2;
+            int rx = OFFSET_X + 14;
             int ry = OFFSET_Y + 16 * TILE_S;
-            drawString(rx, ry, "READY!", 255, 255, 0);
+            drawString(rx, ry, "GET READY", 255, 255, 0);
         } else if (game_state == STATE_GAMEOVER) {
-            int rx = OFFSET_X + 10 * TILE_S - 2;
+            int rx = OFFSET_X + 14;
             int ry = OFFSET_Y + 16 * TILE_S;
-            drawString(rx, ry, "O A E !", 255, 0, 0);
+            drawString(rx, ry, "GAME OVER", 255, 0, 0);
             
             drawPixelCallback(px, py, 255, 0, 0);
             drawPixelCallback(px+1, py+1, 255, 0, 0);

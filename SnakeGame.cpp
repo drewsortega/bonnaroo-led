@@ -2,13 +2,16 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "Leaderboard.h"
+
 extern void screenClearCallback(void);
 extern void updateScreenCallback(void);
 extern void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue);
 
 #define SNAKE_MAX_LEN 1024
-#define BOARD_WIDTH 64
-#define BOARD_HEIGHT 64
+#define BOARD_WIDTH 32
+#define BOARD_HEIGHT 27
+#define OFFSET_Y 10
 
 struct Position {
     int x, y;
@@ -19,10 +22,14 @@ static int snake_len = 0;
 static Position apple;
 static int dir_x = 1;
 static int dir_y = 0;
+enum SnakeGameState { SNAKE_STATE_INTRO, SNAKE_STATE_PLAYING, SNAKE_STATE_GAMEOVER };
+
 static int next_dir_x = 1;
 static int next_dir_y = 0;
 static unsigned long last_move_time = 0;
-static bool game_over = false;
+static SnakeGameState snake_state = SNAKE_STATE_INTRO;
+static unsigned long snake_state_timer = 0;
+static int score = 0;
 
 static void placeApple() {
     bool ok = false;
@@ -50,13 +57,15 @@ void snakeInit() {
     dir_y = 0;
     next_dir_x = 1;
     next_dir_y = 0;
-    game_over = false;
+    snake_state = SNAKE_STATE_INTRO;
+    snake_state_timer = 0;
+    score = 0;
     placeApple();
     last_move_time = 0; // will update immediately
 }
 
 void snakeSetDirection(int dx, int dy) {
-    if (game_over) return;
+    if (snake_state != SNAKE_STATE_PLAYING) return;
     // prevent 180 degree turns
     if (dir_x == -dx && dx != 0) return;
     if (dir_y == -dy && dy != 0) return;
@@ -66,75 +75,123 @@ void snakeSetDirection(int dx, int dy) {
 }
 
 void snakeLoop(unsigned long now) {
-    if (game_over) {
-        // restart after 1 sec
-        if (last_move_time > 0 && now - last_move_time > 1000) { 
-            snakeInit();
-        }
+    if (lbIsActive()) {
+        lbLoop(now);
         return;
     }
 
-    if (last_move_time > 0 && now - last_move_time < 100) {
-        // move every 100ms (10 fps)
-        return;
-    }
-    last_move_time = now;
-    
-    dir_x = next_dir_x;
-    dir_y = next_dir_y;
-    
-    Position next_head = {snake[0].x + dir_x, snake[0].y + dir_y};
-    
-    // Check wall collision
-    if (next_head.x < 0 || next_head.x >= BOARD_WIDTH || 
-        next_head.y < 0 || next_head.y >= BOARD_HEIGHT) {
-        game_over = true;
-        return;
-    }
-    
-    // Check self collision
-    for (int i = 0; i < snake_len; i++) {
-        // If we didn't eat an apple, the tail will move, but to be safe we can just check all except last piece
-        if (i == snake_len - 1 && (next_head.x != apple.x || next_head.y != apple.y)) {
-            continue; // tail will move
-        }
-        if (snake[i].x == next_head.x && snake[i].y == next_head.y) {
-            game_over = true;
+    if (snake_state == SNAKE_STATE_GAMEOVER) {
+        if (snake_state_timer == 0) snake_state_timer = now;
+        if (now - snake_state_timer > 3000) {
+            lbStart("snk_lb.txt", score, [](){ snakeInit(); });
             return;
         }
-    }
-    
-    // Move snake
-    bool ate_apple = (next_head.x == apple.x && next_head.y == apple.y);
-    
-    if (ate_apple) {
-        if (snake_len < SNAKE_MAX_LEN) {
-            snake_len++;
+    } else if (snake_state == SNAKE_STATE_INTRO) {
+        if (snake_state_timer == 0) snake_state_timer = now;
+        if (now - snake_state_timer > 2500) {
+            snake_state = SNAKE_STATE_PLAYING;
+            last_move_time = now;
         }
-    }
-    
-    for (int i = snake_len - 1; i > 0; i--) {
-        snake[i] = snake[i-1];
-    }
-    snake[0] = next_head;
-    
-    if (ate_apple) {
-        placeApple();
+    } else if (snake_state == SNAKE_STATE_PLAYING) {
+        if (last_move_time == 0 || now - last_move_time >= 100) {
+            last_move_time = now;
+            
+            dir_x = next_dir_x;
+            dir_y = next_dir_y;
+            
+            Position next_head = {snake[0].x + dir_x, snake[0].y + dir_y};
+            
+            // Check wall collision
+            if (next_head.x < 0 || next_head.x >= BOARD_WIDTH || 
+                next_head.y < 0 || next_head.y >= BOARD_HEIGHT) {
+                snake_state = SNAKE_STATE_GAMEOVER;
+                snake_state_timer = now;
+            }
+            
+            // Check self collision
+            if (snake_state == SNAKE_STATE_PLAYING) {
+                for (int i = 0; i < snake_len; i++) {
+                    if (i == snake_len - 1 && (next_head.x != apple.x || next_head.y != apple.y)) {
+                        continue;
+                    }
+                    if (snake[i].x == next_head.x && snake[i].y == next_head.y) {
+                        snake_state = SNAKE_STATE_GAMEOVER;
+                        snake_state_timer = now;
+                        break;
+                    }
+                }
+            }
+            
+            if (snake_state == SNAKE_STATE_PLAYING) {
+                bool ate_apple = (next_head.x == apple.x && next_head.y == apple.y);
+                
+                if (ate_apple) {
+                    score += 10;
+                    if (snake_len < SNAKE_MAX_LEN) {
+                        snake_len++;
+                    }
+                }
+                
+                for (int i = snake_len - 1; i > 0; i--) {
+                    snake[i] = snake[i-1];
+                }
+                snake[0] = next_head;
+                
+                if (ate_apple) {
+                    placeApple();
+                }
+            }
+        }
     }
     
     // Draw
     screenClearCallback();
     
+    // Draw Score
+    lbDrawNumber(4, 2, score, 255, 255, 255);
+    
+    // Draw Separator
+    for(int x=0; x<64; x+=2) {
+        drawPixelCallback(x, 9, 150, 150, 150);
+    }
+    
     // Apple
-    drawPixelCallback(apple.x, apple.y, 255, 0, 0); // Red apple
+    int ax = apple.x * 2;
+    int ay = apple.y * 2 + OFFSET_Y;
+    drawPixelCallback(ax, ay, 255, 0, 0);
+    drawPixelCallback(ax+1, ay, 255, 0, 0);
+    drawPixelCallback(ax, ay+1, 255, 0, 0);
+    drawPixelCallback(ax+1, ay+1, 255, 0, 0);
     
     // Snake
     for (int i = 0; i < snake_len; i++) {
+        int sx = snake[i].x * 2;
+        int sy = snake[i].y * 2 + OFFSET_Y;
         if (i == 0) {
-            drawPixelCallback(snake[i].x, snake[i].y, 0, 255, 0); // Bright green head
+            drawPixelCallback(sx, sy, 0, 255, 0);
+            drawPixelCallback(sx+1, sy, 0, 255, 0);
+            drawPixelCallback(sx, sy+1, 0, 255, 0);
+            drawPixelCallback(sx+1, sy+1, 0, 255, 0);
         } else {
-            drawPixelCallback(snake[i].x, snake[i].y, 0, 150, 0); // Darker green body
+            drawPixelCallback(sx, sy, 0, 150, 0);
+            drawPixelCallback(sx+1, sy, 0, 150, 0);
+            drawPixelCallback(sx, sy+1, 0, 150, 0);
+            drawPixelCallback(sx+1, sy+1, 0, 150, 0);
         }
+    }
+    
+    if (snake_state == SNAKE_STATE_INTRO) {
+        lbDrawString(12, 30, "GET READY", 255, 255, 0);
+    } else if (snake_state == SNAKE_STATE_GAMEOVER) {
+        lbDrawString(12, 30, "GAME OVER", 255, 0, 0);
+        
+        // Red X over the head
+        int hx = snake[0].x * 2;
+        int hy = snake[0].y * 2 + OFFSET_Y;
+        drawPixelCallback(hx, hy, 255, 0, 0);
+        drawPixelCallback(hx+1, hy+1, 255, 0, 0);
+        drawPixelCallback(hx+1, hy, 255, 0, 0);
+        drawPixelCallback(hx, hy+1, 255, 0, 0);
     }
     
     updateScreenCallback();

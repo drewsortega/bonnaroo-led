@@ -60,6 +60,7 @@
 
 #include "SnakeGame.h"
 #include "PacmanGame.h"
+#include "Leaderboard.h"
 
 enum AppMode {
     MODE_GIF,
@@ -457,8 +458,8 @@ void HandleBLEInputs(unsigned long now) {
             }
             else {
                 // If it doesn't match any known command
-                if (current_mode == MODE_PACMAN) {
-                    pacmanHandleText(buf);
+                if (lbIsActive()) {
+                    lbHandleText(buf);
                 } else {
                     writeDebugScreen(buf, now);
                 }
@@ -674,6 +675,8 @@ void setup() {
     // ---------- IR Receiver Setup  ----------------
     // ----------------------------------------------
     IrReceiver.begin(IR_RECEIVE_PIN, DISABLE_LED_FEEDBACK); // Start the receiver
+    
+    lbInit(use_sd);
 }
 
 
