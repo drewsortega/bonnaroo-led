@@ -59,10 +59,12 @@
 #include "bitmaps/bm_surprised_pikachu.c"
 
 #include "SnakeGame.h"
+#include "PacmanGame.h"
 
 enum AppMode {
     MODE_GIF,
-    MODE_SNAKE
+    MODE_SNAKE,
+    MODE_PACMAN
 };
 static AppMode current_mode = MODE_GIF;
 
@@ -82,7 +84,7 @@ const int gifsSizeList[] = { sizeof(bm_ariel_dance) };
 // Teensy 4.1 with builtin
 // #define SD_CS BUILTIN_SDCARD
 
-const bool use_sd = true;
+bool use_sd = true;
 // The SmartMatrix takes up SPI0. Use SPI1 instead.
 const bool use_spi1 = true;
 
@@ -427,6 +429,10 @@ void HandleBLEInputs(unsigned long now) {
                     current_mode = MODE_SNAKE;
                     snakeInit();
                     writeDebugScreen("SNAKE", now);
+                } else if (current_mode == MODE_SNAKE) {
+                    current_mode = MODE_PACMAN;
+                    pacmanInit(use_sd);
+                    writeDebugScreen("PACMAN", now);
                 } else {
                     current_mode = MODE_GIF;
                     is_first_frame = true;
@@ -434,20 +440,28 @@ void HandleBLEInputs(unsigned long now) {
                 }
             }
             else if (strcmp(buf, "l") == 0) {
-                snakeSetDirection(-1, 0);
+                if (current_mode == MODE_SNAKE) snakeSetDirection(-1, 0);
+                if (current_mode == MODE_PACMAN) pacmanSetDirection(-1, 0);
             }
             else if (strcmp(buf, "r") == 0) {
-                snakeSetDirection(1, 0);
+                if (current_mode == MODE_SNAKE) snakeSetDirection(1, 0);
+                if (current_mode == MODE_PACMAN) pacmanSetDirection(1, 0);
             }
             else if (strcmp(buf, "u") == 0) {
-                snakeSetDirection(0, -1);
+                if (current_mode == MODE_SNAKE) snakeSetDirection(0, -1);
+                if (current_mode == MODE_PACMAN) pacmanSetDirection(0, -1);
             }
             else if (strcmp(buf, "d") == 0) {
-                snakeSetDirection(0, 1);
+                if (current_mode == MODE_SNAKE) snakeSetDirection(0, 1);
+                if (current_mode == MODE_PACMAN) pacmanSetDirection(0, 1);
             }
             else {
-                // If it doesn't match any known command, just print the text
-                writeDebugScreen(buf, now);
+                // If it doesn't match any known command
+                if (current_mode == MODE_PACMAN) {
+                    pacmanHandleText(buf);
+                } else {
+                    writeDebugScreen(buf, now);
+                }
             }
 
             Serial5.write(buf);
@@ -674,6 +688,8 @@ void loop() {
 
     if (current_mode == MODE_SNAKE) {
         snakeLoop(now);
+    } else if (current_mode == MODE_PACMAN) {
+        pacmanLoop(now);
     } else {
         if (!use_sd) {
             drawImageNoSD(now);

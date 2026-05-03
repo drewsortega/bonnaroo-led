@@ -15,6 +15,11 @@
 #include <string>
 #include <vector>
 
+#ifndef FILE_READ
+#define FILE_READ "rb"
+#define FILE_WRITE "w+b"
+#endif
+
 // Forward declare for SPI config
 class SPIClass;
 extern SPIClass SPI1;
@@ -109,6 +114,15 @@ public:
         return (uint32_t)sz;
     }
     
+    int available() {
+        if (!_file) return 0;
+        long pos = ftell(_file);
+        fseek(_file, 0, SEEK_END);
+        long sz = ftell(_file);
+        fseek(_file, pos, SEEK_SET);
+        return (int)(sz - pos);
+    }
+    
     int read() {
         if (!_file) return -1;
         int c = fgetc(_file);
@@ -119,6 +133,19 @@ public:
         if (!_file) return 0;
         return fread(buf, 1, size, _file);
     }
+    
+    size_t write(const uint8_t* buf, size_t size) {
+        if (!_file) return 0;
+        return fwrite(buf, 1, size, _file);
+    }
+    
+    size_t write(uint8_t val) { return write(&val, 1); }
+    size_t write(const char* str) { return write((const uint8_t*)str, strlen(str)); }
+    size_t print(const char* str) { return write(str); }
+    size_t print(int val) { char buf[32]; snprintf(buf, sizeof(buf), "%d", val); return write(buf); }
+    size_t println() { return write("\n"); }
+    size_t println(const char* str) { size_t n=print(str); n+=println(); return n; }
+    size_t println(int val) { size_t n=print(val); n+=println(); return n; }
     
     bool seek(uint32_t pos) {
         if (!_file) return false;
@@ -215,6 +242,16 @@ public:
         std::string fullPath = _basePath + path;
         struct stat st;
         return stat(fullPath.c_str(), &st) == 0;
+    }
+    
+    bool remove(const char* path) {
+        std::string fullPath;
+        if (path[0] == '/') {
+            fullPath = _basePath + path;
+        } else {
+            fullPath = _basePath + "/" + path;
+        }
+        return ::remove(fullPath.c_str()) == 0;
     }
 };
 

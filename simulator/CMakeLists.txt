@@ -39,6 +39,7 @@ set(SOURCES
     ${INO_CPP}
     ${CMAKE_CURRENT_SOURCE_DIR}/../FilenameFunctions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../SnakeGame.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../PacmanGame.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/SmartMatrix/src/MatrixFont.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/SmartMatrix/src/Layer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/SmartMatrix/src/Font_apple4x6_256.c

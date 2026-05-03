@@ -1,0 +1,668 @@
+#include "PacmanGame.h"
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <SD.h>
+
+extern void screenClearCallback(void);
+extern void updateScreenCallback(void);
+extern void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue);
+
+#define GRID_W 28
+#define GRID_H 29
+#define TILE_S 2
+#define OFFSET_X 4
+#define OFFSET_Y 6
+
+static const char initial_grid[GRID_H][GRID_W + 1] = {
+    "#............##............#",
+    "#.####.#####.##.#####.####.#",
+    "#O####.#####.##.#####.####O#",
+    "#.####.#####.##.#####.####.#",
+    "#..........................#",
+    "#.####.##.########.##.####.#",
+    "#.####.##.########.##.####.#",
+    "#......##....##....##......#",
+    "######.##### ## #####.######",
+    "     #.##### ## #####.#     ",
+    "     #.##          ##.#     ",
+    "     #.## ###--### ##.#     ",
+    "######.## #      # ##.######",
+    "      .   #      #   .      ",
+    "######.## #      # ##.######",
+    "     #.## ######## ##.#     ",
+    "     #.##          ##.#     ",
+    "     #.## ######## ##.#     ",
+    "######.## ######## ##.######",
+    "#............##............#",
+    "#.####.#####.##.#####.####.#",
+    "#.####.#####.##.#####.####.#",
+    "#O..##.......  .......##..O#",
+    "###.##.##.########.##.##.###",
+    "###.##.##.########.##.##.###",
+    "#......##....##....##......#",
+    "#.##########.##.##########.#",
+    "#.##########.##.##########.#",
+    "#..........................#"
+};
+
+static char grid[GRID_H][GRID_W];
+
+enum GhostMode { SCATTER, CHASE, FRIGHTENED, EATEN };
+enum GameState { STATE_INTRO, STATE_PLAYING, STATE_GAMEOVER, STATE_ENTER_NAME, STATE_LEADERBOARD };
+
+struct Pacman {
+    int x, y, dir_x, dir_y, next_dir_x, next_dir_y;
+};
+
+struct Ghost {
+    int x, y, dir_x, dir_y, color_r, color_g, color_b;
+    GhostMode mode;
+    int scatter_target_x, scatter_target_y, spawn_x, spawn_y, exit_timer;
+};
+
+struct LeaderboardEntry {
+    char name[4];
+    int score;
+};
+
+static Pacman pac;
+static Ghost ghosts[4];
+static LeaderboardEntry lb[5];
+static bool lb_loaded = false;
+
+static unsigned long state_timer = 0;
+static GameState game_state = STATE_INTRO;
+static unsigned long last_move_time = 0;
+static unsigned long ghost_last_move_time = 0;
+static int score = 0;
+static int lives = 3;
+static int total_dots = 0;
+static unsigned long frightened_timer = 0;
+static unsigned long mode_timer = 0;
+static bool global_chase_mode = false;
+static int eaten_score = 200;
+static bool pac_has_sd = false;
+
+static const uint8_t font3x5[16][15] = {
+    {1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1}, // 0
+    {0,1,0, 1,1,0, 0,1,0, 0,1,0, 1,1,1}, // 1
+    {1,1,1, 0,0,1, 1,1,1, 1,0,0, 1,1,1}, // 2
+    {1,1,1, 0,0,1, 1,1,1, 0,0,1, 1,1,1}, // 3
+    {1,0,1, 1,0,1, 1,1,1, 0,0,1, 0,0,1}, // 4
+    {1,1,1, 1,0,0, 1,1,1, 0,0,1, 1,1,1}, // 5
+    {1,1,1, 1,0,0, 1,1,1, 1,0,1, 1,1,1}, // 6
+    {1,1,1, 0,0,1, 0,1,0, 0,1,0, 0,1,0}, // 7
+    {1,1,1, 1,0,1, 1,1,1, 1,0,1, 1,1,1}, // 8
+    {1,1,1, 1,0,1, 1,1,1, 0,0,1, 1,1,1}, // 9
+    {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0}, // 10
+    {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0}, // 11
+    {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0}, // 12
+    {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0}, // 13
+    {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0}, // 14
+    {0,1,0, 0,1,0, 0,1,0, 0,0,0, 0,1,0}  // 15 = !
+};
+
+static const uint8_t font_alpha[26][15] = {
+    {1,1,1, 1,0,1, 1,1,1, 1,0,1, 1,0,1}, // A
+    {1,1,0, 1,0,1, 1,1,0, 1,0,1, 1,1,0}, // B
+    {1,1,1, 1,0,0, 1,0,0, 1,0,0, 1,1,1}, // C
+    {1,1,0, 1,0,1, 1,0,1, 1,0,1, 1,1,0}, // D
+    {1,1,1, 1,0,0, 1,1,1, 1,0,0, 1,1,1}, // E
+    {1,1,1, 1,0,0, 1,1,1, 1,0,0, 1,0,0}, // F
+    {1,1,1, 1,0,0, 1,0,1, 1,0,1, 1,1,1}, // G
+    {1,0,1, 1,0,1, 1,1,1, 1,0,1, 1,0,1}, // H
+    {1,1,1, 0,1,0, 0,1,0, 0,1,0, 1,1,1}, // I
+    {0,0,1, 0,0,1, 0,0,1, 1,0,1, 1,1,1}, // J
+    {1,0,1, 1,0,1, 1,1,0, 1,0,1, 1,0,1}, // K
+    {1,0,0, 1,0,0, 1,0,0, 1,0,0, 1,1,1}, // L
+    {1,1,1, 1,1,1, 1,0,1, 1,0,1, 1,0,1}, // M
+    {1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,0,1}, // N
+    {1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1}, // O
+    {1,1,1, 1,0,1, 1,1,1, 1,0,0, 1,0,0}, // P
+    {1,1,1, 1,0,1, 1,0,1, 1,1,1, 0,0,1}, // Q
+    {1,1,1, 1,0,1, 1,1,0, 1,0,1, 1,0,1}, // R
+    {1,1,1, 1,0,0, 1,1,1, 0,0,1, 1,1,1}, // S
+    {1,1,1, 0,1,0, 0,1,0, 0,1,0, 0,1,0}, // T
+    {1,0,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1}, // U
+    {1,0,1, 1,0,1, 1,0,1, 1,0,1, 0,1,0}, // V
+    {1,0,1, 1,0,1, 1,0,1, 1,1,1, 1,1,1}, // W
+    {1,0,1, 1,0,1, 0,1,0, 1,0,1, 1,0,1}, // X
+    {1,0,1, 1,0,1, 1,1,1, 0,1,0, 0,1,0}, // Y
+    {1,1,1, 0,0,1, 0,1,0, 1,0,0, 1,1,1}  // Z
+};
+
+static void drawChar(int x, int y, char c, uint8_t r, uint8_t g, uint8_t b) {
+    if (c >= 'a' && c <= 'z') c -= 32;
+    if (c >= 'A' && c <= 'Z') {
+        int idx = c - 'A';
+        for(int dy=0; dy<5; dy++) {
+            for(int dx=0; dx<3; dx++) {
+                if(font_alpha[idx][dy*3+dx]) drawPixelCallback(x+dx, y+dy, r, g, b);
+            }
+        }
+    } else if (c >= '0' && c <= '9') {
+        int idx = c - '0';
+        for(int dy=0; dy<5; dy++) {
+            for(int dx=0; dx<3; dx++) {
+                if(font3x5[idx][dy*3+dx]) drawPixelCallback(x+dx, y+dy, r, g, b);
+            }
+        }
+    } else if (c == '!') {
+        for(int dy=0; dy<5; dy++) {
+            for(int dx=0; dx<3; dx++) {
+                if(font3x5[15][dy*3+dx]) drawPixelCallback(x+dx, y+dy, r, g, b);
+            }
+        }
+    }
+}
+
+static void drawString(int x, int y, const char* str, uint8_t r, uint8_t g, uint8_t b) {
+    while(*str) {
+        if (*str != ' ') drawChar(x, y, *str, r, g, b);
+        x += 4;
+        str++;
+    }
+}
+
+static void drawNumber(int x, int y, int num, uint8_t r, uint8_t g, uint8_t b) {
+    if (num == 0) {
+        drawChar(x, y, '0', r, g, b);
+        return;
+    }
+    int digits[10];
+    int count = 0;
+    while(num > 0) {
+        digits[count++] = num % 10;
+        num /= 10;
+    }
+    for(int i=count-1; i>=0; i--) {
+        drawChar(x, y, '0' + digits[i], r, g, b);
+        x += 4;
+    }
+}
+
+static void loadLeaderboard() {
+    if (lb_loaded) return;
+    for(int i=0; i<5; i++) {
+        strcpy(lb[i].name, "---");
+        lb[i].score = 0;
+    }
+    lb_loaded = true;
+    if (!pac_has_sd) return;
+    
+    File f = SD.open("pac_lb.txt", FILE_READ);
+    if (f) {
+        for(int i=0; i<5; i++) {
+            char buf[32];
+            int idx = 0;
+            while(f.available()) {
+                char c = f.read();
+                if (c == '\n' || idx >= 31) { buf[idx] = 0; break; }
+                if (c != '\r') buf[idx++] = c;
+            }
+            if (idx == 0) break;
+            char* space = strchr(buf, ' ');
+            if (space) {
+                *space = 0;
+                strncpy(lb[i].name, buf, 3);
+                lb[i].name[3] = 0;
+                lb[i].score = atoi(space+1);
+            }
+        }
+        f.close();
+    }
+}
+
+static void saveLeaderboard() {
+    if (!pac_has_sd) return;
+    if (SD.exists("pac_lb.txt")) {
+        SD.remove("pac_lb.txt");
+    }
+    File f = SD.open("pac_lb.txt", FILE_WRITE);
+    if (f) {
+        for(int i=0; i<5; i++) {
+            f.print(lb[i].name);
+            f.print(" ");
+            f.println(lb[i].score);
+        }
+        f.close();
+    }
+}
+
+static void resetLevel(bool full_reset) {
+    if (full_reset) {
+        total_dots = 0;
+        for (int y = 0; y < GRID_H; y++) {
+            for (int x = 0; x < GRID_W; x++) {
+                grid[y][x] = initial_grid[y][x];
+                if (grid[y][x] == '.' || grid[y][x] == 'O') {
+                    total_dots++;
+                }
+            }
+        }
+    }
+    
+    pac.x = 13;
+    pac.y = 22;
+    pac.dir_x = -1; pac.dir_y = 0;
+    pac.next_dir_x = -1; pac.next_dir_y = 0;
+    
+    ghosts[0].x = 13; ghosts[0].y = 10; ghosts[0].spawn_x = 13; ghosts[0].spawn_y = 13;
+    ghosts[0].dir_x = -1; ghosts[0].dir_y = 0; ghosts[0].exit_timer = 0;
+    ghosts[0].color_r = 255; ghosts[0].color_g = 0; ghosts[0].color_b = 0;
+    ghosts[0].scatter_target_x = 26; ghosts[0].scatter_target_y = 0;
+    
+    ghosts[1].x = 14; ghosts[1].y = 13; ghosts[1].spawn_x = 14; ghosts[1].spawn_y = 13;
+    ghosts[1].dir_x = 0; ghosts[1].dir_y = -1; ghosts[1].exit_timer = 10;
+    ghosts[1].color_r = 255; ghosts[1].color_g = 184; ghosts[1].color_b = 255;
+    ghosts[1].scatter_target_x = 1; ghosts[1].scatter_target_y = 0;
+    
+    ghosts[2].x = 12; ghosts[2].y = 13; ghosts[2].spawn_x = 12; ghosts[2].spawn_y = 13;
+    ghosts[2].dir_x = 0; ghosts[2].dir_y = -1; ghosts[2].exit_timer = 30;
+    ghosts[2].color_r = 0; ghosts[2].color_g = 255; ghosts[2].color_b = 255;
+    ghosts[2].scatter_target_x = 26; ghosts[2].scatter_target_y = 28;
+    
+    ghosts[3].x = 15; ghosts[3].y = 13; ghosts[3].spawn_x = 15; ghosts[3].spawn_y = 13;
+    ghosts[3].dir_x = 0; ghosts[3].dir_y = -1; ghosts[3].exit_timer = 60;
+    ghosts[3].color_r = 255; ghosts[3].color_g = 184; ghosts[3].color_b = 82;
+    ghosts[3].scatter_target_x = 1; ghosts[3].scatter_target_y = 28;
+    
+    for(int i=0; i<4; i++) ghosts[i].mode = SCATTER;
+    
+    global_chase_mode = false;
+    mode_timer = 0;
+    frightened_timer = 0;
+}
+
+void pacmanInit(bool has_sd) {
+    pac_has_sd = has_sd;
+    score = 0;
+    lives = 3;
+    resetLevel(true);
+    game_state = STATE_INTRO;
+    state_timer = 0;
+    last_move_time = 0;
+    ghost_last_move_time = 0;
+}
+
+void pacmanSetDirection(int dx, int dy) {
+    if (game_state != STATE_PLAYING) return;
+    pac.next_dir_x = dx;
+    pac.next_dir_y = dy;
+}
+
+void pacmanHandleText(const char* text) {
+    if (game_state == STATE_ENTER_NAME) {
+        char name[4] = "---";
+        strncpy(name, text, 3);
+        name[3] = '\0';
+        
+        for(int i=0; i<3; i++) {
+            if (name[i] >= 'a' && name[i] <= 'z') name[i] -= 32;
+        }
+        
+        for(int i=0; i<5; i++) {
+            if (score > lb[i].score) {
+                for(int j=4; j>i; j--) {
+                    lb[j] = lb[j-1];
+                }
+                strcpy(lb[i].name, name);
+                lb[i].score = score;
+                break;
+            }
+        }
+        saveLeaderboard();
+        game_state = STATE_LEADERBOARD;
+        state_timer = 0;
+    }
+}
+
+static bool isWall(int x, int y, bool isGhost, bool isEaten) {
+    if (x < 0 || x >= GRID_W) return false; // Tunnel
+    if (y < 0 || y >= GRID_H) return true;
+    if (grid[y][x] == '#') return true;
+    if (grid[y][x] == '-') {
+        if (!isGhost) return true; // Pacman can't pass door
+        if (!isEaten && y == 11) return true; // Ghosts can't enter house unless eaten
+    }
+    return false;
+}
+
+static int distanceSq(int x1, int y1, int x2, int y2) {
+    return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+}
+
+static bool was_in_top_5 = false;
+
+void pacmanLoop(unsigned long now) {
+    if (game_state == STATE_GAMEOVER) {
+        if (state_timer > 0 && now - state_timer > 3000) {
+            loadLeaderboard();
+            if (score > lb[4].score) {
+                was_in_top_5 = true;
+                game_state = STATE_ENTER_NAME;
+            } else {
+                was_in_top_5 = false;
+                game_state = STATE_LEADERBOARD;
+                state_timer = now;
+            }
+        }
+    } else if (game_state == STATE_ENTER_NAME) {
+        // Handled via pacmanHandleText, wait indefinitely
+    } else if (game_state == STATE_LEADERBOARD) {
+        if (state_timer == 0) state_timer = now;
+        if (now - state_timer > 8000) {
+            score = 0;
+            lives = 3;
+            resetLevel(true);
+            game_state = STATE_INTRO;
+            state_timer = now;
+        }
+    } else if (game_state == STATE_INTRO) {
+        if (state_timer == 0) state_timer = now;
+        if (now - state_timer > 2500) {
+            game_state = STATE_PLAYING;
+            last_move_time = now;
+            ghost_last_move_time = now;
+            mode_timer = now;
+        }
+    } else if (game_state == STATE_PLAYING) {
+        if (total_dots == 0) {
+            resetLevel(true);
+            game_state = STATE_INTRO;
+            state_timer = now;
+        } else {
+            // Mode transitions
+            if (frightened_timer > 0) {
+                if (now - frightened_timer > 8000) { // 8 seconds of fright
+                    frightened_timer = 0;
+                    for(int i=0; i<4; i++) {
+                        if (ghosts[i].mode == FRIGHTENED) ghosts[i].mode = global_chase_mode ? CHASE : SCATTER;
+                    }
+                }
+            } else {
+                if (now - mode_timer > 20000) { // switch every 20s
+                    global_chase_mode = !global_chase_mode;
+                    mode_timer = now;
+                    for(int i=0; i<4; i++) {
+                        if (ghosts[i].mode != EATEN) {
+                            ghosts[i].mode = global_chase_mode ? CHASE : SCATTER;
+                            ghosts[i].dir_x = -ghosts[i].dir_x;
+                            ghosts[i].dir_y = -ghosts[i].dir_y;
+                        }
+                    }
+                }
+            }
+
+            // PACMAN MOVEMENT
+            if (now - last_move_time > 100) {
+                last_move_time = now;
+                
+                int try_x = pac.x + pac.next_dir_x;
+                int try_y = pac.y + pac.next_dir_y;
+                if (try_x < 0) try_x = GRID_W - 1;
+                if (try_x >= GRID_W) try_x = 0;
+                
+                if (!isWall(try_x, try_y, false, false)) {
+                    pac.dir_x = pac.next_dir_x;
+                    pac.dir_y = pac.next_dir_y;
+                }
+                
+                pac.x += pac.dir_x;
+                pac.y += pac.dir_y;
+                if (pac.x < 0) pac.x = GRID_W - 1;
+                if (pac.x >= GRID_W) pac.x = 0;
+                
+                if (isWall(pac.x, pac.y, false, false)) {
+                    pac.x -= pac.dir_x;
+                    pac.y -= pac.dir_y;
+                }
+                
+                if (grid[pac.y][pac.x] == '.') {
+                    grid[pac.y][pac.x] = ' ';
+                    score += 10;
+                    total_dots--;
+                } else if (grid[pac.y][pac.x] == 'O') {
+                    grid[pac.y][pac.x] = ' ';
+                    score += 50;
+                    total_dots--;
+                    frightened_timer = now;
+                    eaten_score = 200;
+                    for(int i=0; i<4; i++) {
+                        if (ghosts[i].mode != EATEN) {
+                            ghosts[i].mode = FRIGHTENED;
+                            ghosts[i].dir_x = -ghosts[i].dir_x;
+                            ghosts[i].dir_y = -ghosts[i].dir_y;
+                        }
+                    }
+                }
+            }
+
+            // GHOST MOVEMENT
+            unsigned long ghost_speed = 120;
+            if (frightened_timer > 0) ghost_speed = 160;
+            
+            if (now - ghost_last_move_time > ghost_speed) {
+                ghost_last_move_time = now;
+                
+                for (int i = 0; i < 4; i++) {
+                    if (ghosts[i].exit_timer > 0) {
+                        ghosts[i].exit_timer--;
+                        if (ghosts[i].exit_timer == 0) {
+                            ghosts[i].x = 13; ghosts[i].y = 10;
+                        }
+                        continue;
+                    }
+                    
+                    int target_x = pac.x;
+                    int target_y = pac.y;
+                    
+                    if (ghosts[i].mode == EATEN) {
+                        target_x = 13;
+                        target_y = 10;
+                        if (ghosts[i].x == target_x && ghosts[i].y == target_y) {
+                            ghosts[i].mode = global_chase_mode ? CHASE : SCATTER;
+                            ghosts[i].x = ghosts[i].spawn_x;
+                            ghosts[i].y = ghosts[i].spawn_y;
+                            ghosts[i].exit_timer = 10;
+                            continue;
+                        }
+                    } else if (ghosts[i].mode == SCATTER) {
+                        target_x = ghosts[i].scatter_target_x;
+                        target_y = ghosts[i].scatter_target_y;
+                    } else if (ghosts[i].mode == CHASE) {
+                        if (i == 1) { // Pinky
+                            target_x = pac.x + pac.dir_x * 4;
+                            target_y = pac.y + pac.dir_y * 4;
+                        } else if (i == 2) { // Inky
+                            int tx = pac.x + pac.dir_x * 2;
+                            int ty = pac.y + pac.dir_y * 2;
+                            target_x = tx + (tx - ghosts[0].x);
+                            target_y = ty + (ty - ghosts[0].y);
+                        } else if (i == 3) { // Clyde
+                            if (distanceSq(ghosts[i].x, ghosts[i].y, pac.x, pac.y) < 64) {
+                                target_x = ghosts[i].scatter_target_x;
+                                target_y = ghosts[i].scatter_target_y;
+                            }
+                        }
+                    }
+                    
+                    int dirs[4][2] = {{0,-1}, {-1,0}, {0,1}, {1,0}}; // UP, LEFT, DOWN, RIGHT
+                    int best_d = -1;
+                    int min_dist = 999999;
+                    int valid_dirs[4];
+                    int valid_count = 0;
+                    
+                    for (int d = 0; d < 4; d++) {
+                        int dx = dirs[d][0];
+                        int dy = dirs[d][1];
+                        if (dx == -ghosts[i].dir_x && dy == -ghosts[i].dir_y && (ghosts[i].dir_x!=0 || ghosts[i].dir_y!=0)) continue;
+                        
+                        int nx = ghosts[i].x + dx;
+                        int ny = ghosts[i].y + dy;
+                        if (nx < 0) nx = GRID_W - 1;
+                        if (nx >= GRID_W) nx = 0;
+                        
+                        if (!isWall(nx, ny, true, ghosts[i].mode == EATEN)) {
+                            valid_dirs[valid_count++] = d;
+                            int dist = distanceSq(nx, ny, target_x, target_y);
+                            if (dist < min_dist) {
+                                min_dist = dist;
+                                best_d = d;
+                            }
+                        }
+                    }
+                    
+                    if (valid_count > 0) {
+                        if (ghosts[i].mode == FRIGHTENED) {
+                            int r = rand() % valid_count;
+                            best_d = valid_dirs[r];
+                        }
+                        ghosts[i].dir_x = dirs[best_d][0];
+                        ghosts[i].dir_y = dirs[best_d][1];
+                    } else {
+                        ghosts[i].dir_x = -ghosts[i].dir_x;
+                        ghosts[i].dir_y = -ghosts[i].dir_y;
+                    }
+                    
+                    ghosts[i].x += ghosts[i].dir_x;
+                    ghosts[i].y += ghosts[i].dir_y;
+                    if (ghosts[i].x < 0) ghosts[i].x = GRID_W - 1;
+                    if (ghosts[i].x >= GRID_W) ghosts[i].x = 0;
+                }
+            }
+
+            // Collision detection
+            for (int i = 0; i < 4; i++) {
+                if (ghosts[i].x == pac.x && ghosts[i].y == pac.y) {
+                    if (ghosts[i].mode == FRIGHTENED) {
+                        ghosts[i].mode = EATEN;
+                        score += eaten_score;
+                        eaten_score *= 2;
+                    } else if (ghosts[i].mode != EATEN) {
+                        lives--;
+                        if (lives > 0) {
+                            resetLevel(false);
+                            game_state = STATE_INTRO;
+                            state_timer = now;
+                        } else {
+                            game_state = STATE_GAMEOVER;
+                            state_timer = now;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // DRAWING
+    screenClearCallback();
+    
+    if (game_state == STATE_ENTER_NAME) {
+        drawString(10, 10, "NEW HIGH SCORE", 255, 255, 0);
+        drawString(10, 30, "ENTER NAME", 255, 255, 255);
+        drawString(10, 40, "VIA BLE", 255, 255, 255);
+        drawNumber(20, 50, score, 0, 255, 255);
+    } else if (game_state == STATE_LEADERBOARD) {
+        drawString(12, 2, "TOP SCORES", 255, 255, 0);
+        for(int i=0; i<5; i++) {
+            int ry = 14 + i * 8;
+            drawString(8, ry, lb[i].name, 255, 255, 255);
+            drawNumber(28, ry, lb[i].score, 0, 255, 255);
+        }
+        if (!was_in_top_5) {
+            // Draw a horizontal separator line
+            for(int i=4; i<60; i+=2) {
+                drawPixelCallback(i, 54, 150, 150, 150);
+            }
+            drawString(2, 57, "YOUR SCORE", 255, 0, 0);
+            drawNumber(44, 57, score, 0, 255, 255);
+        }
+    } else {
+        // Draw Score
+        drawNumber(4, 0, score, 255, 255, 255);
+        
+        // Draw Lives
+        for (int l = 0; l < lives - 1; l++) {
+            int lx = 64 - 4 - (l * 6);
+            int ly = 1;
+            drawPixelCallback(lx, ly, 255, 255, 0);
+            drawPixelCallback(lx+1, ly, 255, 255, 0);
+            drawPixelCallback(lx, ly+1, 255, 255, 0);
+            drawPixelCallback(lx+1, ly+1, 255, 255, 0);
+        }
+        
+        for (int y = 0; y < GRID_H; y++) {
+            for (int x = 0; x < GRID_W; x++) {
+                char c = grid[y][x];
+                int px = OFFSET_X + x * TILE_S;
+                int py = OFFSET_Y + y * TILE_S;
+                
+                if (c == '#') {
+                    drawPixelCallback(px, py, 0, 0, 150);
+                    drawPixelCallback(px+1, py, 0, 0, 150);
+                    drawPixelCallback(px, py+1, 0, 0, 150);
+                    drawPixelCallback(px+1, py+1, 0, 0, 150);
+                } else if (c == '-') {
+                    drawPixelCallback(px, py+1, 255, 184, 174);
+                    drawPixelCallback(px+1, py+1, 255, 184, 174);
+                } else if (c == '.') {
+                    drawPixelCallback(px, py, 255, 184, 174);
+                } else if (c == 'O') {
+                    drawPixelCallback(px, py, 255, 184, 174);
+                    drawPixelCallback(px+1, py, 255, 184, 174);
+                    drawPixelCallback(px, py+1, 255, 184, 174);
+                    drawPixelCallback(px+1, py+1, 255, 184, 174);
+                }
+            }
+        }
+        
+        // Draw pacman
+        int px = OFFSET_X + pac.x * TILE_S;
+        int py = OFFSET_Y + pac.y * TILE_S;
+        drawPixelCallback(px, py, 255, 255, 0);
+        drawPixelCallback(px+1, py, 255, 255, 0);
+        drawPixelCallback(px, py+1, 255, 255, 0);
+        drawPixelCallback(px+1, py+1, 255, 255, 0);
+        
+        // Draw ghosts
+        for (int i = 0; i < 4; i++) {
+            int gx = OFFSET_X + ghosts[i].x * TILE_S;
+            int gy = OFFSET_Y + ghosts[i].y * TILE_S;
+            
+            if (ghosts[i].mode == FRIGHTENED) {
+                drawPixelCallback(gx, gy, 0, 0, 255);
+                drawPixelCallback(gx+1, gy, 0, 0, 255);
+                drawPixelCallback(gx, gy+1, 0, 0, 255);
+                drawPixelCallback(gx+1, gy+1, 0, 0, 255);
+            } else if (ghosts[i].mode == EATEN) {
+                drawPixelCallback(gx, gy, 255, 255, 255);
+                drawPixelCallback(gx+1, gy, 255, 255, 255);
+            } else {
+                drawPixelCallback(gx, gy, ghosts[i].color_r, ghosts[i].color_g, ghosts[i].color_b);
+                drawPixelCallback(gx+1, gy, ghosts[i].color_r, ghosts[i].color_g, ghosts[i].color_b);
+                drawPixelCallback(gx, gy+1, ghosts[i].color_r, ghosts[i].color_g, ghosts[i].color_b);
+                drawPixelCallback(gx+1, gy+1, ghosts[i].color_r, ghosts[i].color_g, ghosts[i].color_b);
+            }
+        }
+        
+        // Draw "READY!" or Game Over
+        if (game_state == STATE_INTRO) {
+            int rx = OFFSET_X + 10 * TILE_S - 2;
+            int ry = OFFSET_Y + 16 * TILE_S;
+            drawString(rx, ry, "READY!", 255, 255, 0);
+        } else if (game_state == STATE_GAMEOVER) {
+            int rx = OFFSET_X + 10 * TILE_S - 2;
+            int ry = OFFSET_Y + 16 * TILE_S;
+            drawString(rx, ry, "O A E !", 255, 0, 0);
+            
+            drawPixelCallback(px, py, 255, 0, 0);
+            drawPixelCallback(px+1, py+1, 255, 0, 0);
+            drawPixelCallback(px+1, py, 255, 0, 0);
+            drawPixelCallback(px, py+1, 255, 0, 0);
+        }
+    }
+    
+    updateScreenCallback();
+}
