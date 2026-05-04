@@ -7,7 +7,7 @@ extern void updateScreenCallback(void);
 extern void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue);
 
 static int current_vis = 0;
-static const int NUM_VIS = 4;
+static const int NUM_VIS = 5;
 
 // Helper: HSV to RGB
 static void HSVtoRGB(float h, float s, float v, uint8_t* r, uint8_t* g, uint8_t* b) {
@@ -269,6 +269,80 @@ static void drawGameOfLife(unsigned long now) {
     }
 }
 
+static void drawMandelbrot(unsigned long now) {
+    // "Endless Fractal Tunnel" using Log-Polar mapping and Modulo logic!
+    // This converts the Cartesian screen into a tunnel, allowing us to use
+    // fmod() to mathematically loop the zoom forever without hitting precision limits.
+    float t = now / 1000.0f;
+    
+    int max_iter = 16; // Lower iteration is fine since the shapes are dense
+    
+    // Animate the Julia set constant so the tunnel walls constantly mutate
+    float julia_c_re = -0.8f + 0.2f * sinf(t * 0.5f);
+    float julia_c_im = 0.156f + 0.2f * cosf(t * 0.3f);
+    
+    for (int y = 0; y < 64; y++) {
+        for (int x = 0; x < 64; x++) {
+            // Map pixel to center (-1.0 to 1.0)
+            float px = (x - 31.5f) / 32.0f;
+            float py = (y - 31.5f) / 32.0f;
+            
+            // Convert to polar coordinates for tunnel mapping
+            float r = sqrtf(px * px + py * py);
+            if (r < 0.001f) r = 0.001f; // Prevent log(0)
+            float theta = atan2f(py, px);
+            
+            // Log-Polar Magic: log(r) makes zooming linear!
+            float u = logf(r) * 2.5f - t * 2.0f; // The forward zoom
+            
+            // Map angle to a linear value and add spin
+            float v = (theta + M_PI) / (2.0f * M_PI);
+            v = v * 5.0f + t * 0.3f; // 5 spiral arms, slowly spinning
+            
+            // MODULO LOGIC: This wraps the tunnel endlessly!
+            float u_wrap = fmodf(u + 10000.0f, 1.0f);
+            float v_wrap = fmodf(v + 10000.0f, 1.0f);
+            
+            // Map the wrapped cell back to a fractal coordinate space
+            float z_re = (u_wrap - 0.5f) * 4.0f;
+            float z_im = (v_wrap - 0.5f) * 4.0f;
+            int iter = 0;
+            
+            // Run the fractal math on the tunnel walls
+            while (z_re * z_re + z_im * z_im < 4.0f && iter < max_iter) {
+                float next_re = z_re * z_re - z_im * z_im + julia_c_re;
+                float next_im = 2.0f * z_re * z_im + julia_c_im;
+                z_re = next_re;
+                z_im = next_im;
+                iter++;
+            }
+            
+            if (iter == max_iter) {
+                // Core of the fractal pattern
+                drawPixelCallback(x, y, 0, 0, 0); 
+            } else {
+                // "Purple Chrome Blazing" color mapping
+                float hue = 290.0f + 50.0f * sinf((float)iter * 0.5f - t * 2.0f);
+                if (hue < 0.0f) hue += 360.0f;
+                if (hue >= 360.0f) hue -= 360.0f;
+                
+                // Chrome shiny effect
+                float val = 0.5f + 0.5f * cosf((float)iter * 0.8f);
+                val = sqrtf(val); 
+                
+                // Fade to pure black in the deep center of the tunnel
+                float depth = r * 2.0f;
+                if (depth > 1.0f) depth = 1.0f;
+                val *= depth; // Applies the darkness to the distance
+                
+                uint8_t r_col, g_col, b_col;
+                HSVtoRGB(hue, 1.0f, val, &r_col, &g_col, &b_col);
+                drawPixelCallback(x, y, r_col, g_col, b_col);
+            }
+        }
+    }
+}
+
 void visLoop(unsigned long now) {
     screenClearCallback();
     
@@ -280,6 +354,8 @@ void visLoop(unsigned long now) {
         drawJulia(now);
     } else if (current_vis == 3) {
         drawGameOfLife(now);
+    } else if (current_vis == 4) {
+        drawMandelbrot(now);
     }
     
     updateScreenCallback();
