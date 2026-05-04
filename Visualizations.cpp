@@ -7,7 +7,7 @@ extern void updateScreenCallback(void);
 extern void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue);
 
 static int current_vis = 0;
-static const int NUM_VIS = 2;
+static const int NUM_VIS = 3;
 
 // Helper: HSV to RGB
 static void HSVtoRGB(float h, float s, float v, uint8_t* r, uint8_t* g, uint8_t* b) {
@@ -96,6 +96,53 @@ static void drawConcentric(unsigned long now) {
     }
 }
 
+static void drawJulia(unsigned long now) {
+    float t = now / 2000.0f;
+    // Animate the Julia constant c
+    float c_re = 0.7885f * cos(t);
+    float c_im = 0.7885f * sin(t);
+    
+    int max_iter = 32;
+    
+    for (int y = 0; y < 64; y++) {
+        for (int x = 0; x < 64; x++) {
+            // Map pixel to complex plane (-1.5 to 1.5)
+            float z_re = 3.0f * (x - 32.0f) / 64.0f;
+            float z_im = 3.0f * (y - 32.0f) / 64.0f;
+            
+            int iter = 0;
+            while (z_re * z_re + z_im * z_im < 4.0f && iter < max_iter) {
+                float next_re = z_re * z_re - z_im * z_im + c_re;
+                float next_im = 2.0f * z_re * z_im + c_im;
+                z_re = next_re;
+                z_im = next_im;
+                iter++;
+            }
+            
+            if (iter == max_iter) {
+                drawPixelCallback(x, y, 0, 0, 0); // Inside the set
+            } else {
+                // Smooth coloring based on iterations
+                float hue = fmod((float)iter / max_iter * 360.0f + t * 100.0f, 360.0f);
+                if (hue < 0) hue += 360.0f;
+                
+                // Create a glowing neon effect on a black background
+                float val = 0.0f;
+                if (iter > 4) {
+                    val = (float)(iter - 4) / (max_iter - 4);
+                    // Extremely aggressive climb to full brightness to fix the dimness
+                    // without destroying the distinct separated shapes.
+                    val = sqrt(sqrt(val)); 
+                }
+                
+                uint8_t r, g, b;
+                HSVtoRGB(hue, 1.0f, val, &r, &g, &b);
+                drawPixelCallback(x, y, r, g, b);
+            }
+        }
+    }
+}
+
 void visLoop(unsigned long now) {
     screenClearCallback();
     
@@ -103,6 +150,8 @@ void visLoop(unsigned long now) {
         drawPlasma(now);
     } else if (current_vis == 1) {
         drawConcentric(now);
+    } else if (current_vis == 2) {
+        drawJulia(now);
     }
     
     updateScreenCallback();
