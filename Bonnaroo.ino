@@ -355,6 +355,17 @@ void HandleIRInputs(unsigned long now) {
     }
     lastAcceptedIRTimestamp = now;
 
+    if (lbIsActive()) {
+        switch(received_data) {
+            case BUT_UP:    lbHandleInput(0, -1, false); break;
+            case BUT_DOWN:  lbHandleInput(0, 1, false); break;
+            case BUT_LEFT:  lbHandleInput(-1, 0, false); break;
+            case BUT_RIGHT: lbHandleInput(1, 0, false); break;
+            case BUT_ENTER: lbHandleInput(0, 0, true); break;
+        }
+        IrReceiver.resume();
+        return;
+    }
 
     switch(received_data) {
         case BUT_VOL_DOWN:
@@ -387,74 +398,53 @@ void HandleIRInputs(unsigned long now) {
 }
 
 void HandleBLEInputs(unsigned long now) {
-    if (Serial5.available() > 0) {
-        char buf[300];
-        buf[0] = 0;
+    while (Serial5.available() > 0) {
+        char c = Serial5.read();
 
-        int read_total = Serial5.readBytesUntil('!', buf, 299);
-
-        if (read_total > 0) {
-            buf[read_total] = '\0';
-
-            // Check if the string in 'buf' exactly matches our commands
-            if (strcmp(buf, "brtdown") == 0) {
-                adjustBrightness(-26);
-                strcat(buf, "BRT: ");
-                strcat(buf, String(brightness).c_str());
-            } 
-            else if (strcmp(buf, "brtup") == 0) {
-                adjustBrightness(26);
-                strcat(buf, "BRT: ");
-                strcat(buf, String(brightness).c_str());
-            } 
-            // Assuming you want the text "left" and "right" via Bluetooth
-            else if (strcmp(buf, "prev") == 0) {
-                change_image_idx(-1);
-            } 
-            else if (strcmp(buf, "next") == 0) {
-                change_image_idx(1);
-            }
-            else if (strcmp(buf, "menu") == 0) {
+        switch (c) {
+            case '-': adjustBrightness(-26); break;
+            case '+': adjustBrightness(26); break;
+            case 'm':
                 if (current_mode == MODE_GIF) {
                     current_mode = MODE_SNAKE;
                     snakeInit();
-                    writeDebugScreen("SNAKE", now);
                 } else if (current_mode == MODE_SNAKE) {
                     current_mode = MODE_PACMAN;
                     pacmanInit(use_sd);
-                    writeDebugScreen("PACMAN", now);
                 } else {
                     current_mode = MODE_GIF;
                     is_first_frame = true;
-                    writeDebugScreen("GIF", now);
                 }
-            }
-            else if (strcmp(buf, "l") == 0) {
-                if (current_mode == MODE_SNAKE) snakeSetDirection(-1, 0);
-                if (current_mode == MODE_PACMAN) pacmanSetDirection(-1, 0);
-            }
-            else if (strcmp(buf, "r") == 0) {
-                if (current_mode == MODE_SNAKE) snakeSetDirection(1, 0);
-                if (current_mode == MODE_PACMAN) pacmanSetDirection(1, 0);
-            }
-            else if (strcmp(buf, "u") == 0) {
-                if (current_mode == MODE_SNAKE) snakeSetDirection(0, -1);
-                if (current_mode == MODE_PACMAN) pacmanSetDirection(0, -1);
-            }
-            else if (strcmp(buf, "d") == 0) {
-                if (current_mode == MODE_SNAKE) snakeSetDirection(0, 1);
-                if (current_mode == MODE_PACMAN) pacmanSetDirection(0, 1);
-            }
-            else {
-                // If it doesn't match any known command
-                if (lbIsActive()) {
-                    lbHandleText(buf);
-                } else {
-                    writeDebugScreen(buf, now);
-                }
-            }
-
-            Serial5.write(buf);
+                break;
+            case 'l':
+                if (lbIsActive()) lbHandleInput(-1, 0, false);
+                else if (current_mode == MODE_SNAKE) snakeSetDirection(-1, 0);
+                else if (current_mode == MODE_PACMAN) pacmanSetDirection(-1, 0);
+                else if (current_mode == MODE_GIF) change_image_idx(-1);
+                break;
+            case 'r':
+                if (lbIsActive()) lbHandleInput(1, 0, false);
+                else if (current_mode == MODE_SNAKE) snakeSetDirection(1, 0);
+                else if (current_mode == MODE_PACMAN) pacmanSetDirection(1, 0);
+                else if (current_mode == MODE_GIF) change_image_idx(1);
+                break;
+            case 'u':
+                if (lbIsActive()) lbHandleInput(0, -1, false);
+                else if (current_mode == MODE_SNAKE) snakeSetDirection(0, -1);
+                else if (current_mode == MODE_PACMAN) pacmanSetDirection(0, -1);
+                break;
+            case 'd':
+                if (lbIsActive()) lbHandleInput(0, 1, false);
+                else if (current_mode == MODE_SNAKE) snakeSetDirection(0, 1);
+                else if (current_mode == MODE_PACMAN) pacmanSetDirection(0, 1);
+                break;
+            case 'e':
+                if (lbIsActive()) lbHandleInput(0, 0, true);
+                else if (current_mode == MODE_SNAKE) snakeHandleEnter();
+                else if (current_mode == MODE_PACMAN) pacmanHandleEnter();
+                break;
+            default:
+                break;
         }
     }
 }

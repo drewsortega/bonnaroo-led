@@ -48,7 +48,7 @@ static const char initial_grid[GRID_H][GRID_W + 1] = {
 static char grid[GRID_H][GRID_W];
 
 enum GhostMode { SCATTER, CHASE, FRIGHTENED, EATEN };
-enum GameState { STATE_INTRO, STATE_PLAYING, STATE_GAMEOVER, STATE_ENTER_NAME, STATE_LEADERBOARD };
+enum GameState { STATE_WAITING, STATE_INTRO, STATE_PLAYING, STATE_GAMEOVER, STATE_ENTER_NAME, STATE_LEADERBOARD };
 
 struct Pacman {
     int x, y, dir_x, dir_y, next_dir_x, next_dir_y;
@@ -138,7 +138,7 @@ void pacmanInit(bool has_sd) {
     score = 0;
     lives = 3;
     resetLevel(true);
-    game_state = STATE_INTRO;
+    game_state = STATE_WAITING;
     state_timer = 0;
     last_move_time = 0;
     ghost_last_move_time = 0;
@@ -150,8 +150,11 @@ void pacmanSetDirection(int dx, int dy) {
     pac.next_dir_y = dy;
 }
 
-void pacmanHandleText(const char* text) {
-    // Handled by lbHandleText
+void pacmanHandleEnter() {
+    if (game_state == STATE_WAITING) {
+        game_state = STATE_INTRO;
+        state_timer = 0;
+    }
 }
 
 static bool isWall(int x, int y, bool isGhost, bool isEaten) {
@@ -178,8 +181,8 @@ void pacmanLoop(unsigned long now) {
                 score = 0;
                 lives = 3;
                 resetLevel(true);
-                game_state = STATE_INTRO;
-                state_timer = millis();
+                game_state = STATE_WAITING;
+                state_timer = 0;
                 last_move_time = 0;
                 ghost_last_move_time = 0;
             });
@@ -189,9 +192,11 @@ void pacmanLoop(unsigned long now) {
     } else if (game_state == STATE_ENTER_NAME || game_state == STATE_LEADERBOARD) {
         lbLoop(now);
         return;
+    } else if (game_state == STATE_WAITING) {
+        // Wait for enter
     } else if (game_state == STATE_INTRO) {
         if (state_timer == 0) state_timer = now;
-        if (now - state_timer > 2500) {
+        if (now - state_timer > 2000) {
             game_state = STATE_PLAYING;
             last_move_time = now;
             ghost_last_move_time = now;
@@ -461,7 +466,12 @@ void pacmanLoop(unsigned long now) {
         }
         
         // Draw "GET READY" or Game Over
-        if (game_state == STATE_INTRO) {
+        if (game_state == STATE_WAITING) {
+            int rx = OFFSET_X + 10;
+            int ry = OFFSET_Y + 14 * TILE_S;
+            drawString(rx, ry, "PACMAN", 255, 255, 0);
+            drawString(rx - 8, ry + 10, "PRESS ENTER", 255, 255, 255);
+        } else if (game_state == STATE_INTRO) {
             int rx = OFFSET_X + 14;
             int ry = OFFSET_Y + 16 * TILE_S;
             drawString(rx, ry, "GET READY", 255, 255, 0);

@@ -2,5 +2,5 @@
 
 void pacmanInit(bool has_sd);
 void pacmanSetDirection(int dx, int dy);
-void pacmanHandleText(const char* text);
+void pacmanHandleEnter();
 void pacmanLoop(unsigned long now);

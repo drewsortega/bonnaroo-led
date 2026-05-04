@@ -22,7 +22,7 @@ static int snake_len = 0;
 static Position apple;
 static int dir_x = 1;
 static int dir_y = 0;
-enum SnakeGameState { SNAKE_STATE_INTRO, SNAKE_STATE_PLAYING, SNAKE_STATE_GAMEOVER };
+enum SnakeGameState { SNAKE_STATE_WAITING, SNAKE_STATE_INTRO, SNAKE_STATE_PLAYING, SNAKE_STATE_GAMEOVER };
 
 static int next_dir_x = 1;
 static int next_dir_y = 0;
@@ -57,7 +57,7 @@ void snakeInit() {
     dir_y = 0;
     next_dir_x = 1;
     next_dir_y = 0;
-    snake_state = SNAKE_STATE_INTRO;
+    snake_state = SNAKE_STATE_WAITING;
     snake_state_timer = 0;
     score = 0;
     placeApple();
@@ -74,6 +74,13 @@ void snakeSetDirection(int dx, int dy) {
     next_dir_y = dy;
 }
 
+void snakeHandleEnter() {
+    if (snake_state == SNAKE_STATE_WAITING) {
+        snake_state = SNAKE_STATE_INTRO;
+        snake_state_timer = 0;
+    }
+}
+
 void snakeLoop(unsigned long now) {
     if (lbIsActive()) {
         lbLoop(now);
@@ -86,9 +93,11 @@ void snakeLoop(unsigned long now) {
             lbStart("snk_lb.txt", score, [](){ snakeInit(); });
             return;
         }
+    } else if (snake_state == SNAKE_STATE_WAITING) {
+        // Wait for enter press
     } else if (snake_state == SNAKE_STATE_INTRO) {
         if (snake_state_timer == 0) snake_state_timer = now;
-        if (now - snake_state_timer > 2500) {
+        if (now - snake_state_timer > 2000) {
             snake_state = SNAKE_STATE_PLAYING;
             last_move_time = now;
         }
@@ -180,7 +189,10 @@ void snakeLoop(unsigned long now) {
         }
     }
     
-    if (snake_state == SNAKE_STATE_INTRO) {
+    if (snake_state == SNAKE_STATE_WAITING) {
+        lbDrawString(16, 24, "SNAKE", 255, 255, 0);
+        lbDrawString(4, 38, "PRESS ENTER", 255, 255, 255);
+    } else if (snake_state == SNAKE_STATE_INTRO) {
         lbDrawString(12, 30, "GET READY", 255, 255, 0);
     } else if (snake_state == SNAKE_STATE_GAMEOVER) {
         lbDrawString(12, 30, "GAME OVER", 255, 0, 0);
