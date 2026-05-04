@@ -105,7 +105,7 @@ const bool use_spi1 = true;
 // at 180.
 const int max_brightness = 180;
 // Start at low brightness - 26.
-static int brightness = 26;
+static int brightness = 24;
 
 const rgb24 COLOR_BLACK = {
     0, 0, 0 };
@@ -310,7 +310,7 @@ bool validatePressAndGetName(uint32_t button, char* buf) {
 void adjustBrightness(int amount) {
     int next_brightness = brightness + amount;
     if (amount < 0) {
-        brightness = max(0, next_brightness);
+        brightness = max(1, next_brightness);
     } else {
         brightness = min(max_brightness, next_brightness);
     }
@@ -375,12 +375,12 @@ void HandleIRInputs(unsigned long now) {
 
     switch(received_data) {
         case BUT_VOL_DOWN:
-            adjustBrightness(-26);
+            adjustBrightness(-6);
             strcat(debug_buf, "BRT: ");
             strcat(debug_buf, String(brightness).c_str());
             break;
         case BUT_VOL_UP:
-            adjustBrightness(26);
+            adjustBrightness(6);
             strcat(debug_buf, "BRT: ");
             strcat(debug_buf, String(brightness).c_str());
             break;
@@ -408,8 +408,8 @@ void HandleBLEInputs(unsigned long now) {
         char c = Serial5.read();
 
         switch (c) {
-            case '-': adjustBrightness(-26); break;
-            case '+': adjustBrightness(26); break;
+            case '-': adjustBrightness(-6); break;
+            case '+': adjustBrightness(6); break;
             case 'm':
                 if (current_mode == MODE_GIF) {
                     current_mode = MODE_SNAKE;

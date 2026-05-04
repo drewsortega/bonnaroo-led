@@ -7,7 +7,7 @@
 extern void screenClearCallback(void);
 extern void updateScreenCallback(void);
 extern void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue);
-extern unsigned long millis();
+#include <Arduino.h>
 
 // ── CONSTANTS & TYPES ──
 #define BOARD_W 10

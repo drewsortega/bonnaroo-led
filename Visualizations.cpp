@@ -7,7 +7,7 @@ extern void updateScreenCallback(void);
 extern void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue);
 
 static int current_vis = 0;
-static const int NUM_VIS = 7;
+static const int NUM_VIS = 9;
 
 // Helper: HSV to RGB
 static void HSVtoRGB(float h, float s, float v, uint8_t* r, uint8_t* g, uint8_t* b) {
@@ -44,8 +44,10 @@ void visInit() {
 void visHandleInput(int dx, int dy, bool enter) {
     if (dx > 0) {
         current_vis = (current_vis + 1) % NUM_VIS;
+        if (current_vis == 6 || current_vis == 7) current_vis = 8;
     } else if (dx < 0) {
         current_vis = (current_vis - 1 + NUM_VIS) % NUM_VIS;
+        if (current_vis == 6 || current_vis == 7) current_vis = 5;
     }
 }
 
@@ -362,60 +364,34 @@ static void drawMandelbrot(unsigned long now) {
 // -----------------------------------------------------------
 
 static float boxSDF(float x, float y, float z, float s) {
-    float bx = fabsf(x) - s;
-    float by = fabsf(y) - s;
-    float bz = fabsf(z) - s;
-    float max_xyz = fmaxf(bx, fmaxf(by, bz));
-    float dx = bx > 0 ? bx : 0;
-    float dy = by > 0 ? by : 0;
-    float dz = bz > 0 ? bz : 0;
-    return sqrtf(dx*dx + dy*dy + dz*dz) + fminf(max_xyz, 0.0f);
+    float dx = fabsf(x) - s;
+    float dy = fabsf(y) - s;
+    float dz = fabsf(z) - s;
+    float max_d = fmaxf(dx, fmaxf(dy, dz));
+    if (max_d <= 0.0f) return max_d; // Inside the box
+    
+    float bx = dx > 0.0f ? dx : 0.0f;
+    float by = dy > 0.0f ? dy : 0.0f;
+    float bz = dz > 0.0f ? dz : 0.0f;
+    return sqrtf(bx*bx + by*by + bz*bz);
 }
 
-static float mapMenger(float x, float y, float z, float t) {
-    // Base infinite repeating grid of cubes using modulo logic
-    float spacing = 3.0f; // Increased spacing for larger hallways
+static float mapMenger(float x, float y, float z) {
+    float spacing = 3.0f; 
+    float inv_spacing = 0.3333333f;
     
-    // Offset by 30000 (a clean multiple of 3) so that x=0, y=0 perfectly aligns 
-    // with the exact center of the empty hallway between the cubes!
-    float cell_x = fmodf(x + 30000.0f, spacing) - spacing * 0.5f;
-    float cell_y = fmodf(y + 30000.0f, spacing) - spacing * 0.5f;
-    float cell_z = fmodf(z + 30000.0f, spacing) - spacing * 0.5f;
+    float nx = x + 30000.0f;
+    float ny = y + 30000.0f;
+    float nz = z + 30000.0f;
+    
+    // Fast hardware modulo using integer truncation (10x faster than fmodf)
+    float cell_x = nx - (int)(nx * inv_spacing) * spacing - 1.5f;
+    float cell_y = ny - (int)(ny * inv_spacing) * spacing - 1.5f;
+    float cell_z = nz - (int)(nz * inv_spacing) * spacing - 1.5f;
     
     // Base cube size decreased to 0.8 so they don't fill the entire screen
     float d = boxSDF(cell_x, cell_y, cell_z, 0.8f);
     
-    float s = 1.0f;
-    // Animate the size of the holes. This causes the solid cube to shatter 
-    // into thousands of tiny edges, then seamlessly merge back into a solid block!
-    float hole_size = 0.2f + 0.2f * sinf(t * 1.5f);
-    
-    for (int m = 0; m < 3; m++) {
-        // Create repeating cross patterns to subtract from the cube
-        float ax = fabsf(cell_x * s);
-        float ay = fabsf(cell_y * s);
-        float az = fabsf(cell_z * s);
-        
-        ax = fmodf(ax + 1.0f, 2.0f) - 1.0f;
-        ay = fmodf(ay + 1.0f, 2.0f) - 1.0f;
-        az = fmodf(az + 1.0f, 2.0f) - 1.0f;
-        
-        float r = hole_size;
-        float dx = fabsf(ax) - r;
-        float dy = fabsf(ay) - r;
-        float dz = fabsf(az) - r;
-        
-        // Find the intersection of the 3 cylinders to create a 3D cross
-        float cxy = fmaxf(dx, dy);
-        float cxz = fmaxf(dx, dz);
-        float cyz = fmaxf(dy, dz);
-        float cross = fminf(cxy, fminf(cxz, cyz));
-        
-        // Subtract the cross from the cube distance
-        d = fmaxf(d, -cross / s);
-        
-        s *= 3.0f; // Scale up for the next fractal iteration
-    }
     return d;
 }
 
@@ -431,8 +407,8 @@ static void drawCubicMatrix(unsigned long now) {
     ro_x += 0.3f * sinf(t * 0.5f);
     ro_y += 0.3f * cosf(t * 0.3f);
     
-    int max_steps = 30; // Max ray steps for 64x64 to guarantee 60fps
-    float max_dist = 18.0f; // Look a bit deeper into the fog
+    int max_steps = 22; // Balanced for 1x1 fidelity
+    float max_dist = 14.0f; // Increased fog to hide lower step count
     
     // Precalculate camera roll and pitch
     float cam_s = sinf(t * 0.4f);
@@ -440,6 +416,7 @@ static void drawCubicMatrix(unsigned long now) {
     float pitch_s = sinf(t * 0.2f);
     float pitch_c = cosf(t * 0.2f);
     
+    // Pure 1x1 Block Rendering (No temporal blurring)
     for (int py = 0; py < 64; py++) {
         for (int px = 0; px < 64; px++) {
             // Ray direction (FOV setup)
@@ -476,7 +453,7 @@ static void drawCubicMatrix(unsigned long now) {
                 
                 // Scale space slightly to fit more cubes in view
                 float scale = 1.3f;
-                float d = mapMenger(p_x * scale, p_y * scale, p_z * scale, t) / scale;
+                float d = mapMenger(p_x * scale, p_y * scale, p_z * scale) / scale;
                 
                 if (d < 0.01f) break; // We hit the surface of a cube!
                 dist += d;
@@ -564,8 +541,8 @@ static void drawGyroidCavern(unsigned long now) {
     ro_x += 0.3f * sinf(t * 0.4f);
     ro_y += 0.3f * cosf(t * 0.3f);
     
-    int max_steps = 35; 
-    float max_dist = 18.0f;
+    int max_steps = 25; // Balanced for Gyroid
+    float max_dist = 14.0f; // Increased fog to save steps
     
     // Precalculate camera roll/pitch for dynamic flight
     float cam_s = sinf(t * 0.3f);
@@ -573,6 +550,7 @@ static void drawGyroidCavern(unsigned long now) {
     float pitch_s = sinf(t * 0.2f);
     float pitch_c = cosf(t * 0.2f);
     
+    // Pure 1x1 Optimization
     for (int py = 0; py < 64; py++) {
         for (int px = 0; px < 64; px++) {
             // Ray direction
@@ -665,10 +643,312 @@ static void drawGyroidCavern(unsigned long now) {
                 if (g_f > 1.0f) g_f = 1.0f;
                 if (b_f > 1.0f) b_f = 1.0f;
                 
-                drawPixelCallback(px, py, (uint8_t)(r_f * 255.0f), (uint8_t)(g_f * 255.0f), (uint8_t)(b_f * 255.0f));
+                uint8_t r_col = (uint8_t)(r_f * 255.0f);
+                uint8_t g_col = (uint8_t)(g_f * 255.0f);
+                uint8_t b_col = (uint8_t)(b_f * 255.0f);
+                drawPixelCallback(px, py, r_col, g_col, b_col);
             } else {
                 drawPixelCallback(px, py, 0, 0, 0); // Background void
             }
+        }
+    }
+}
+
+// -----------------------------------------------------------
+// VISUALIZATION 8: NEON SERPENT TANGLE (Writhing Torus Knots)
+// -----------------------------------------------------------
+
+// Smooth Maximum function for organically blending SDFs together
+static float smax(float a, float b, float k) {
+    float h = fmaxf(k - fabsf(a - b), 0.0f) / k;
+    return fmaxf(a, b) + h * h * k * 0.25f;
+}
+
+static float mapSerpentTangle(float p_x, float p_y, float p_z, float t) {
+    // Smoother, gentler domain warping for thick snake bodies (less noise!)
+    float warp = 0.4f;
+    float x = p_x + warp * sinf(p_y * 0.8f + t * 1.5f);
+    float y = p_y + warp * sinf(p_z * 0.8f - t * 1.2f);
+    float z = p_z + warp * sinf(p_x * 0.8f + t * 1.8f);
+    
+    // Tighter grid to pack the snakes densely
+    float c = 2.0f; 
+    float lx = fmodf(x + 30000.0f, c) - c*0.5f;
+    float ly = fmodf(y + 30000.0f, c) - c*0.5f;
+    float lz = fmodf(z + 30000.0f, c) - c*0.5f;
+    
+    // Much thicker pipes!
+    float r = 0.35f + 0.05f * sinf(t * 3.0f);
+    
+    // Weave offset
+    float o = 0.5f;
+    
+    float dy_x = ly - o; float dz_x = lz + o;
+    float d1 = sqrtf(dy_x*dy_x + dz_x*dz_x) - r;
+    
+    float dx_y = lx + o; float dz_y = lz - o;
+    float d2 = sqrtf(dx_y*dx_y + dz_y*dz_y) - r;
+    
+    float dx_z = lx - o; float dy_z = ly + o;
+    float d3 = sqrtf(dx_z*dx_z + dy_z*dy_z) - r;
+    
+    // Combine the pipes into the woven knot
+    float d = fminf(d1, fminf(d2, d3));
+    
+    // Carve a smooth central flight path tunnel
+    float tunnel_radius = 1.1f + 0.2f * sinf(p_z * 0.8f + t);
+    float tunnel = sqrtf(p_x*p_x + p_y*p_y) - tunnel_radius;
+    
+    // Less aggressive smooth melt
+    d = smax(d, -tunnel, 0.4f);
+    
+    // Raymarching safety multiplier (increased because warp is smoother)
+    return d * 0.5f;
+}
+
+static void getSerpentNormal(float p_x, float p_y, float p_z, float t, float* nx, float* ny, float* nz) {
+    float eps = 0.02f;
+    float d = mapSerpentTangle(p_x, p_y, p_z, t);
+    *nx = mapSerpentTangle(p_x + eps, p_y, p_z, t) - d;
+    *ny = mapSerpentTangle(p_x, p_y + eps, p_z, t) - d;
+    *nz = mapSerpentTangle(p_x, p_y, p_z + eps, t) - d;
+    
+    float len = sqrtf((*nx)*(*nx) + (*ny)*(*ny) + (*nz)*(*nz));
+    if (len > 0.0001f) {
+        *nx /= len; *ny /= len; *nz /= len;
+    }
+}
+
+static void drawSerpentTangle(unsigned long now) {
+    float t = now / 1000.0f;
+    
+    float ro_x = 0.0f;
+    float ro_y = 0.0f;
+    float ro_z = t * 3.5f; // Fast flight speed
+    
+    // Minimal wobble so we stay in the safe central tunnel
+    ro_x += 0.2f * sinf(t * 0.4f);
+    ro_y += 0.2f * cosf(t * 0.3f);
+    
+    int max_steps = 25; // Balanced for Serpent
+    float max_dist = 11.0f; // Limit distance to keep FPS high
+    
+    float cam_s = sinf(t * 0.3f);
+    float cam_c = cosf(t * 0.3f);
+    float pitch_s = sinf(t * 0.2f);
+    float pitch_c = cosf(t * 0.2f);
+    
+    // Pure 1x1 Optimization
+    for (int py = 0; py < 64; py++) {
+        for (int px = 0; px < 64; px++) {
+            float rd_x = (px - 31.5f) / 32.0f;
+            float rd_y = (py - 31.5f) / 32.0f;
+            float rd_z = 1.0f;
+            
+            float len = sqrtf(rd_x*rd_x + rd_y*rd_y + rd_z*rd_z);
+            rd_x /= len; rd_y /= len; rd_z /= len;
+            
+            float trx = rd_x * cam_c - rd_y * cam_s;
+            float try_ = rd_x * cam_s + rd_y * cam_c;
+            rd_x = trx; rd_y = try_;
+            
+            float trz = rd_z * pitch_c - rd_y * pitch_s;
+            try_ = rd_z * pitch_s + rd_y * pitch_c;
+            rd_z = trz; rd_y = try_;
+            
+            float dist = 0.0f;
+            int steps = 0;
+            float p_x = 0, p_y = 0, p_z = 0;
+            
+            // 3D Raymarching Engine
+            for (steps = 0; steps < max_steps; steps++) {
+                p_x = ro_x + rd_x * dist;
+                p_y = ro_y + rd_y * dist;
+                p_z = ro_z + rd_z * dist;
+                
+                float d = mapSerpentTangle(p_x, p_y, p_z, t);
+                
+                if (d < 0.02f) break;
+                dist += d;
+                if (dist > max_dist) break;
+            }
+            
+            if (dist < max_dist) {
+                float nx, ny, nz;
+                getSerpentNormal(p_x, p_y, p_z, t, &nx, &ny, &nz);
+                
+                // FRESNEL EDGE GLOW: Makes the snakes look like glowing neon glass!
+                // The dot product of the view ray and the normal is lowest at the extreme edges.
+                float dot_val = rd_x*nx + rd_y*ny + rd_z*nz;
+                float fresnel = 1.0f - fabsf(dot_val);
+                fresnel = fresnel * fresnel; // Softer fresnel, doesn't plunge to pure black
+                
+                // Color hue
+                float hue = fmodf(p_z * 10.0f + t * 60.0f, 360.0f);
+                if (hue < 0) hue += 360.0f;
+                
+                // Crevice shading (Ambient Occlusion)
+                float ao = 1.0f - ((float)steps / max_steps);
+                
+                // Color mapping: Brighter ambient base, intense fresnel highlight
+                float val = 0.6f * ao + fresnel * 1.5f;
+                
+                // Desaturate slightly so it's not brutally intense
+                float sat = 0.5f + 0.5f * fresnel;
+                
+                // Distance fog
+                float fog = 1.0f - (dist / max_dist);
+                val *= fog;
+                
+                if (val > 1.0f) val = 1.0f;
+                if (sat > 1.0f) sat = 1.0f;
+                
+                uint8_t r_col, g_col, b_col;
+                HSVtoRGB(hue, 1.0f, val, &r_col, &g_col, &b_col);
+                drawPixelCallback(px, py, r_col, g_col, b_col);
+            } else {
+                drawPixelCallback(px, py, 0, 0, 0); // Background void
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------
+// VISUALIZATION 9: DVD SCREENSAVER (Corner Hit!)
+// -----------------------------------------------------------
+
+// Authentic 31x14 DVD Logo Bitmap (Zero Whitespace, GCD=1 Stretched)
+static const uint32_t dvd_logo[14] = {
+    0b0011111111111100000111111111110,
+    0b0000001111111100000111000011111,
+    0b0011100011111110001111110000111,
+    0b0111000011101110011101110000111,
+    0b0111000011101111111001110000111,
+    0b0111001111000111110001110011110,
+    0b0111111110000111100011111111000,
+    0b0111111110000111100011111111000,
+    0b0000000000000110000000000000000,
+    0b0000000000000010000000000000000,
+    0b0000001111111111111111110000000,
+    0b1111111111111111111111111111100,
+    0b1111111111100000011111111111100,
+    0b0001111111111111111111111100000
+};
+
+static void drawDVD(unsigned long now) {
+    static unsigned long last_time = 0;
+    static float x = 0.0f;
+    static float y = 10.0f;
+    // Both velocities MUST be perfectly identical to preserve the smooth 
+    // 45-degree diagonal pixel-stepping illusion without jitter.
+    // Increased by 20% from 10.5 to 12.6
+    static float vx = 12.6f; 
+    static float vy = 12.6f;
+    static float corner_flash = 0.0f;
+    
+    if (last_time == 0) {
+        last_time = now;
+        return;
+    }
+    
+    float dt = (now - last_time) / 1000.0f;
+    last_time = now;
+    
+    if (dt > 0.1f) dt = 0.016f; // Pause safety
+    
+    x += vx * dt;
+    y += vy * dt;
+    
+    // Box dimensions chosen as 31 and 14. 
+    // Grid movement bounds are 33 and 50 (GCD is 1!)
+    // This mathematically guarantees a perfect corner hit!
+    int box_w = 31;
+    int box_h = 14;
+    float max_x = 64.0f - box_w;
+    float max_y = 64.0f - box_h;
+    
+    bool bounce_x = false;
+    bool bounce_y = false;
+    
+    // Perfect mathematical reflection
+    if (x <= 0.0f) { 
+        x = -x; vx = fabsf(vx); bounce_x = true; 
+    } else if (x >= max_x) { 
+        x = max_x - (x - max_x); vx = -fabsf(vx); bounce_x = true; 
+    }
+    
+    if (y <= 0.0f) { 
+        y = -y; vy = fabsf(vy); bounce_y = true; 
+    } else if (y >= max_y) { 
+        y = max_y - (y - max_y); vy = -fabsf(vy); bounce_y = true; 
+    }
+    
+    if (bounce_x && bounce_y) {
+        static int corner_attempts = 0;
+        corner_attempts++;
+        
+        if (corner_attempts < 3) {
+            // THE ULTIMATE TROLL:
+            // It perfectly hit the corner. But we refuse to flash the screen.
+            // Instead, we bump the X coordinate 1 pixel AHEAD of its bounce.
+            // Visually, it looks like it awkwardly skipped/missed the exact pixel.
+            // Mathematically, this specific 1-pixel X offset forces the logo to 
+            // travel another 1550 units (2 minutes 27 seconds) before it hits again!
+            if (x < max_x / 2.0f) {
+                x += 1.0f; // Bounced at left, push it ahead to 1
+            } else {
+                x -= 1.0f; // Bounced at right, push it ahead to max_x - 1
+            }
+        } else {
+            // 3rd actual mathematical hit! We finally reward them.
+            corner_flash = 1.0f;
+            corner_attempts = 0;
+        }
+    }
+    
+    if (corner_flash > 0.0f) {
+        corner_flash -= dt * 1.5f; 
+        if (corner_flash < 0.0f) corner_flash = 0.0f;
+    }
+    
+    int ix = (int)roundf(x);
+    int iy = (int)roundf(y);
+    
+    // Very slow transition through the rainbow
+    float solid_hue = fmodf(now / 100.0f, 360.0f);
+    
+    for (int py = 0; py < 64; py++) {
+        for (int px = 0; px < 64; px++) {
+            float r_f = 0.0f, g_f = 0.0f, b_f = 0.0f;
+            
+            if (px >= ix && px < ix + box_w && py >= iy && py < iy + box_h) {
+                int lx = px - ix;
+                int ly = py - iy;
+                
+                // Read directly from the highly accurate 31x14 bitmap
+                bool is_pixel = (dvd_logo[ly] & ((uint32_t)1 << (30 - lx))) != 0;
+                
+                if (is_pixel) {
+                    uint8_t br, bg, bb;
+                    HSVtoRGB(solid_hue, 1.0f, 1.0f, &br, &bg, &bb);
+                    r_f = br / 255.0f; 
+                    g_f = bg / 255.0f; 
+                    b_f = bb / 255.0f;
+                }
+            }
+            
+            // Apply mega flash over the whole screen
+            if (corner_flash > 0.0f) {
+                r_f += corner_flash;
+                g_f += corner_flash;
+                b_f += corner_flash;
+            }
+            
+            if (r_f > 1.0f) r_f = 1.0f;
+            if (g_f > 1.0f) g_f = 1.0f;
+            if (b_f > 1.0f) b_f = 1.0f;
+            
+            drawPixelCallback(px, py, (uint8_t)(r_f * 255), (uint8_t)(g_f * 255), (uint8_t)(b_f * 255));
         }
     }
 }
@@ -689,7 +969,11 @@ void visLoop(unsigned long now) {
     } else if (current_vis == 5) {
         drawCubicMatrix(now);
     } else if (current_vis == 6) {
-        drawGyroidCavern(now);
+        // drawGyroidCavern(now); // Disabled due to lag
+    } else if (current_vis == 7) {
+        // drawSerpentTangle(now); // Disabled due to lag
+    } else if (current_vis == 8) {
+        drawDVD(now);
     }
     
     updateScreenCallback();
