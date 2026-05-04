@@ -53,14 +53,12 @@ public:
         _name = (pos != std::string::npos) ? path.substr(pos + 1) : path;
         
         struct stat st;
-        if (stat(path.c_str(), &st) == 0) {
-            if (S_ISDIR(st.st_mode)) {
-                _isDir = true;
-                _dir = opendir(path.c_str());
-                _basePath = path;
-            } else {
-                _file = fopen(path.c_str(), mode);
-            }
+        if (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
+            _isDir = true;
+            _dir = opendir(path.c_str());
+            _basePath = path;
+        } else {
+            _file = fopen(path.c_str(), mode);
         }
     }
     
@@ -239,7 +237,12 @@ public:
     }
     
     bool exists(const char* path) {
-        std::string fullPath = _basePath + path;
+        std::string fullPath;
+        if (path[0] == '/') {
+            fullPath = _basePath + path;
+        } else {
+            fullPath = _basePath + "/" + path;
+        }
         struct stat st;
         return stat(fullPath.c_str(), &st) == 0;
     }

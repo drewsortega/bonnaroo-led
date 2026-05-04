@@ -12,6 +12,7 @@ simulator/build/
 *.hex
 *.bin
 *.eep
+*lb.txt
 
 # Python
 __pycache__/
