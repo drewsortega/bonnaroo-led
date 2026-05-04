@@ -120,15 +120,15 @@ void getGIFFilenameByIndex(const char *directoryName, int index, char *pnBuffer)
         return;
 
     while ((index >= 0)) {
-        my_sd_file = directory.openNextFile();
-        if (!my_sd_file) break;
+        File entry = directory.openNextFile();
+        if (!entry) break;
 
-        if (isAnimationFile(my_sd_file.name())) {
+        if (isAnimationFile(entry.name())) {
             index--;
 
             // Copy the directory name into the pathname buffer			
             strcpy(pnBuffer, directoryName);
-			
+            
 			//ESP32 SD Library includes the full path name in the filename, so no need to add the directory name
 #if defined(ESP32)
             pnBuffer[0] = 0;
@@ -138,13 +138,12 @@ void getGIFFilenameByIndex(const char *directoryName, int index, char *pnBuffer)
 #endif
 
             // Append the filename to the pathname
-            strcat(pnBuffer, my_sd_file.name());
+            strcat(pnBuffer, entry.name());
         }
 
-        my_sd_file.close();
+        entry.close();
     }
 
-    my_sd_file.close();
     directory.close();
 }
 

@@ -34,8 +34,8 @@ static int score = 0;
 static void placeApple() {
     bool ok = false;
     while (!ok) {
-        apple.x = rand() % BOARD_WIDTH;
-        apple.y = rand() % BOARD_HEIGHT;
+        apple.x = 1 + rand() % (BOARD_WIDTH - 2);
+        apple.y = 1 + rand() % (BOARD_HEIGHT - 2);
         ok = true;
         for (int i = 0; i < snake_len; i++) {
             if (snake[i].x == apple.x && snake[i].y == apple.y) {
@@ -93,7 +93,7 @@ void snakeLoop(unsigned long now) {
             last_move_time = now;
         }
     } else if (snake_state == SNAKE_STATE_PLAYING) {
-        if (last_move_time == 0 || now - last_move_time >= 100) {
+        if (last_move_time == 0 || now - last_move_time >= 115) {
             last_move_time = now;
             
             dir_x = next_dir_x;

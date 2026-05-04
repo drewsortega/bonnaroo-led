@@ -391,21 +391,10 @@ void HandleBLEInputs(unsigned long now) {
         char buf[300];
         buf[0] = 0;
 
-        // Let's see if it's receiving ANY bytes at all
-        Serial.println("Incoming BLE data detected..."); 
-
         int read_total = Serial5.readBytesUntil('!', buf, 299);
-
-        Serial.print("Bytes read: ");
-        Serial.println(read_total);
 
         if (read_total > 0) {
             buf[read_total] = '\0';
-
-            // Print the exact string to your laptop console
-            Serial.print("Decoded String: [");
-            Serial.print(buf);
-            Serial.println("]");
 
             // Check if the string in 'buf' exactly matches our commands
             if (strcmp(buf, "brtdown") == 0) {
@@ -489,7 +478,10 @@ void displayGIFFromMemoryById(int id, unsigned long now) {
     // Check if we should display the next frame on this cycle.
     if ((now - lastFrameDisplayTime) > currentFrameDelay) {
         if (is_first_frame) {
-            if(decoder.startDecoding((uint8_t *)gifsList[0], gifsSizeList[0]) < 0) {
+            int startResult = decoder.startDecoding((uint8_t *)gifsList[0], gifsSizeList[0]);
+            if(startResult < 0) {
+                Serial.print("GIF Memory startDecoding Error: ");
+                Serial.println(startResult);
                 writeDebugScreen("Bad frame", now);
                 lastFrameDisplayTime = 0;
             }
@@ -502,6 +494,8 @@ void displayGIFFromMemoryById(int id, unsigned long now) {
 
         // it's time to start decoding a new GIF if there was an error, and don't wait to decode
         if(result < 0) {
+            Serial.print("GIF Memory decodeFrame Error: ");
+            Serial.println(result);
             writeDebugScreen("Bad frame", now);
             lastFrameDisplayTime = 0;
             currentFrameDelay = 0;
@@ -561,7 +555,10 @@ void drawImageWithSD(unsigned long now) {
         if (is_first_frame || !start_ok) {
             backgroundLayer.fillScreen(COLOR_BLACK);
             backgroundLayer.swapBuffers();
-            if(decoder.startDecoding() < 0) {
+            int startResult = decoder.startDecoding();
+            if(startResult < 0) {
+                Serial.print("GIF SD startDecoding Error: ");
+                Serial.println(startResult);
                 lastFrameDisplayTime = 0;
                 start_ok = false;
                 return;
@@ -575,6 +572,8 @@ void drawImageWithSD(unsigned long now) {
         currentFrameDelay = decoder.getFrameDelay_ms();
 
         if(result < 0) {
+            Serial.print("GIF SD decodeFrame Error: ");
+            Serial.println(result);
             lastFrameDisplayTime = 0;
             currentFrameDelay = 0;
             start_ok = false;
