@@ -60,12 +60,14 @@
 
 #include "SnakeGame.h"
 #include "PacmanGame.h"
+#include "FroggerGame.h"
 #include "Leaderboard.h"
 
 enum AppMode {
     MODE_GIF,
     MODE_SNAKE,
-    MODE_PACMAN
+    MODE_PACMAN,
+    MODE_FROGGER
 };
 static AppMode current_mode = MODE_GIF;
 
@@ -411,6 +413,9 @@ void HandleBLEInputs(unsigned long now) {
                 } else if (current_mode == MODE_SNAKE) {
                     current_mode = MODE_PACMAN;
                     pacmanInit(use_sd);
+                } else if (current_mode == MODE_PACMAN) {
+                    current_mode = MODE_FROGGER;
+                    froggerInit();
                 } else {
                     current_mode = MODE_GIF;
                     is_first_frame = true;
@@ -420,28 +425,33 @@ void HandleBLEInputs(unsigned long now) {
                 if (lbIsActive()) lbHandleInput(-1, 0, false);
                 else if (current_mode == MODE_SNAKE) snakeSetDirection(-1, 0);
                 else if (current_mode == MODE_PACMAN) pacmanSetDirection(-1, 0);
+                else if (current_mode == MODE_FROGGER) froggerSetDirection(-1, 0);
                 else if (current_mode == MODE_GIF) change_image_idx(-1);
                 break;
             case 'r':
                 if (lbIsActive()) lbHandleInput(1, 0, false);
                 else if (current_mode == MODE_SNAKE) snakeSetDirection(1, 0);
                 else if (current_mode == MODE_PACMAN) pacmanSetDirection(1, 0);
+                else if (current_mode == MODE_FROGGER) froggerSetDirection(1, 0);
                 else if (current_mode == MODE_GIF) change_image_idx(1);
                 break;
             case 'u':
                 if (lbIsActive()) lbHandleInput(0, -1, false);
                 else if (current_mode == MODE_SNAKE) snakeSetDirection(0, -1);
                 else if (current_mode == MODE_PACMAN) pacmanSetDirection(0, -1);
+                else if (current_mode == MODE_FROGGER) froggerSetDirection(0, -1);
                 break;
             case 'd':
                 if (lbIsActive()) lbHandleInput(0, 1, false);
                 else if (current_mode == MODE_SNAKE) snakeSetDirection(0, 1);
                 else if (current_mode == MODE_PACMAN) pacmanSetDirection(0, 1);
+                else if (current_mode == MODE_FROGGER) froggerSetDirection(0, 1);
                 break;
             case 'e':
                 if (lbIsActive()) lbHandleInput(0, 0, true);
                 else if (current_mode == MODE_SNAKE) snakeHandleEnter();
                 else if (current_mode == MODE_PACMAN) pacmanHandleEnter();
+                else if (current_mode == MODE_FROGGER) froggerHandleEnter();
                 break;
             default:
                 break;
@@ -682,6 +692,8 @@ void loop() {
         snakeLoop(now);
     } else if (current_mode == MODE_PACMAN) {
         pacmanLoop(now);
+    } else if (current_mode == MODE_FROGGER) {
+        froggerLoop(now);
     } else {
         if (!use_sd) {
             drawImageNoSD(now);
