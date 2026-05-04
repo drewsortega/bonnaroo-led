@@ -63,13 +63,15 @@
 #include "FroggerGame.h"
 #include "TetrisGame.h"
 #include "Leaderboard.h"
+#include "Visualizations.h"
 
 enum AppMode {
     MODE_GIF,
     MODE_SNAKE,
     MODE_PACMAN,
     MODE_FROGGER,
-    MODE_TETRIS
+    MODE_TETRIS,
+    MODE_VISUALIZATIONS
 };
 static AppMode current_mode = MODE_GIF;
 
@@ -421,6 +423,9 @@ void HandleBLEInputs(unsigned long now) {
                 } else if (current_mode == MODE_FROGGER) {
                     current_mode = MODE_TETRIS;
                     tetrisInit();
+                } else if (current_mode == MODE_TETRIS) {
+                    current_mode = MODE_VISUALIZATIONS;
+                    visInit();
                 } else {
                     current_mode = MODE_GIF;
                     is_first_frame = true;
@@ -432,6 +437,7 @@ void HandleBLEInputs(unsigned long now) {
                 else if (current_mode == MODE_PACMAN) pacmanSetDirection(-1, 0);
                 else if (current_mode == MODE_FROGGER) froggerSetDirection(-1, 0);
                 else if (current_mode == MODE_TETRIS) tetrisHandleInput(-1, 0, false);
+                else if (current_mode == MODE_VISUALIZATIONS) visHandleInput(-1, 0, false);
                 else if (current_mode == MODE_GIF) change_image_idx(-1);
                 break;
             case 'r':
@@ -440,6 +446,7 @@ void HandleBLEInputs(unsigned long now) {
                 else if (current_mode == MODE_PACMAN) pacmanSetDirection(1, 0);
                 else if (current_mode == MODE_FROGGER) froggerSetDirection(1, 0);
                 else if (current_mode == MODE_TETRIS) tetrisHandleInput(1, 0, false);
+                else if (current_mode == MODE_VISUALIZATIONS) visHandleInput(1, 0, false);
                 else if (current_mode == MODE_GIF) change_image_idx(1);
                 break;
             case 'u':
@@ -706,6 +713,8 @@ void loop() {
         froggerLoop(now);
     } else if (current_mode == MODE_TETRIS) {
         tetrisLoop(now);
+    } else if (current_mode == MODE_VISUALIZATIONS) {
+        visLoop(now);
     } else {
         if (!use_sd) {
             drawImageNoSD(now);
