@@ -1,6 +1,7 @@
 #include "FroggerGame.h"
 #include <stdint.h>
 #include <stdlib.h>
+#include <math.h>
 #include "Leaderboard.h"
 
 extern void screenClearCallback(void);
@@ -44,8 +45,17 @@ struct LaneData {
     uint8_t cr, cg, cb;      // object color
     int obj_count;
     int obj_x[MAX_OBJS];     // pixel x positions
-    int obj_w;               // width of each object
+    int obj_w[MAX_OBJS];     // width of each object (per-object)
     unsigned long last_move;  // last time objects moved
+};
+
+// Simple hash for deterministic per-row randomness
+static unsigned int rowHash(int row, int salt) {
+    unsigned int h = (unsigned int)(row * 2654435761u + salt * 340573321u);
+    h ^= h >> 16;
+    h *= 0x45d9f3b;
+    h ^= h >> 16;
+    return h;
 };
 
 #define LANE_BUF 20
@@ -70,50 +80,97 @@ static const uint8_t car_colors[][3] = {
     {255, 150, 50},   // orange
 };
 
-// ── Determine lane properties from world row ──
-static void getLaneInfo(int world_row, int* type, int* dir, int* speed,
-                        uint8_t* cr, uint8_t* cg, uint8_t* cb,
-                        int* obj_count, int* obj_w) {
+// Helper: Calculate world properties for a given world_row with expanding sections.
+// Sections start with 5 rows per block (road/river), and increase by 1 every 4 sections.
+// Returns: section index, block size (number of road or river lanes in this section),
+// and offset within the current block (0 to blockSize-1)
+// Also returns whether it's a road block or river block, and if it's a safe zone.
+static void getWorldPos(int world_row, int* section_out, int* block_size_out, 
+                        bool* is_safe_out, bool* is_river_block_out, int* offset_out) {
     if (world_row <= 0) {
+        *is_safe_out = true;
+        return;
+    }
+    
+    int current_row = 1;
+    int section = 0;
+    
+    while (true) {
+        int block_size = 5 + (section / 4); // Increases every 4 safe zones
+        int section_length = block_size * 2 + 2; // Road block + safe + river block + safe
+        
+        if (world_row >= current_row && world_row < current_row + section_length) {
+            // It's in this section
+            *section_out = section;
+            *block_size_out = block_size;
+            
+            int local_row = world_row - current_row;
+            
+            if (local_row == block_size || local_row == section_length - 1) {
+                *is_safe_out = true;
+                return;
+            }
+            
+            *is_safe_out = false;
+            if (local_row < block_size) {
+                // Road block
+                *is_river_block_out = false;
+                *offset_out = local_row;
+            } else {
+                // River block
+                *is_river_block_out = true;
+                *offset_out = local_row - block_size - 1;
+            }
+            return;
+        }
+        
+        current_row += section_length;
+        section++;
+    }
+}
+
+// ── Determine lane type/direction/speed/color from world row ──
+static void getLaneInfo(int world_row, int* type, int* dir, int* speed,
+                        uint8_t* cr, uint8_t* cg, uint8_t* cb) {
+    bool is_safe, is_river;
+    int section, block_size, offset;
+    
+    getWorldPos(world_row, &section, &block_size, &is_safe, &is_river, &offset);
+
+    if (world_row <= 0 || is_safe) {
         *type = LANE_SAFE;
         return;
     }
 
-    int offset = (world_row - 1) % 12;
-    int section = (world_row - 1) / 12;  // 0, 1, 2, ... increases = harder
+    // Base speed per section: starts at 135ms, decreases continually
+    // Use an asymptotic decay so it never reaches 0 but keeps getting harder
+    int section_base = 40 + (int)(95.0f * powf(0.85f, section)); 
 
-    if (offset == 5 || offset == 11) {
-        // Safe zone between road and river
-        *type = LANE_SAFE;
-        return;
-    }
+    // Per-lane random speed: varies wildly to create extreme speed differences
+    // Varies by +/- 80ms at the start, shrinking slightly as base speed increases
+    // so cars don't go backwards or break playability bounds.
+    int spread = 60 + (section_base / 2);
+    int lane_variation = (int)(rowHash(world_row, 99) % (spread * 2)) - spread;
 
-    // Speed: starts at 180ms, decreases by 3 per section, min 50ms
-    int base = 180 - section * 3;
-    if (base < 50) base = 50;
-
-    if (offset < 5) {
-        // Road lane
+    if (!is_river) {
         *type = LANE_ROAD;
         *dir = (offset % 2 == 0) ? 1 : -1;
-        *speed = base - offset * 5;  // slight variation within section
-        if (*speed < 50) *speed = 50;
+        *speed = section_base + lane_variation;
+        // Hard limits to keep playability
+        if (*speed < 20) *speed = 20; // very fast
+        if (*speed > 300) *speed = 300; // very slow
         int ci = (section * 5 + offset) % 5;
         *cr = car_colors[ci][0];
         *cg = car_colors[ci][1];
         *cb = car_colors[ci][2];
-        *obj_count = 2;
-        *obj_w = 5 + (offset % 3);  // 5-7px wide cars
     } else {
-        // River lane (offset 6-10)
-        int river_idx = offset - 6;
         *type = LANE_RIVER;
-        *dir = (river_idx % 2 == 0) ? -1 : 1;
-        *speed = base - river_idx * 5;
-        if (*speed < 50) *speed = 50;
-        *cr = 139; *cg = 90; *cb = 43;  // brown logs
-        *obj_count = 2;
-        *obj_w = 14 + (river_idx % 3) * 2;  // 14-18px wide logs
+        *dir = (offset % 2 == 0) ? -1 : 1; // Alternating direction
+        *speed = section_base + lane_variation;
+        // Hard limits to keep playability
+        if (*speed < 20) *speed = 20; // very fast
+        if (*speed > 300) *speed = 300; // very slow
+        *cr = 139; *cg = 90; *cb = 43;
     }
 }
 
@@ -144,22 +201,85 @@ static LaneData* getLane(int world_row) {
     l->world_row = world_row;
     l->last_move = 0;
 
-    int type, dir, speed, obj_count, obj_w;
+    int type, dir, speed;
     uint8_t cr, cg, cb;
-    getLaneInfo(world_row, &type, &dir, &speed, &cr, &cg, &cb, &obj_count, &obj_w);
+    getLaneInfo(world_row, &type, &dir, &speed, &cr, &cg, &cb);
 
     l->type = type;
     l->dir = dir;
     l->speed = speed;
     l->cr = cr; l->cg = cg; l->cb = cb;
-    l->obj_count = (type == LANE_SAFE) ? 0 : obj_count;
-    l->obj_w = obj_w;
 
-    // Space objects evenly
-    if (l->obj_count > 0) {
-        int spacing = BOARD_W / l->obj_count;
+    if (type == LANE_SAFE) {
+        l->obj_count = 0;
+    } else {
+        bool is_safe, is_river;
+        int section, block_size, offset;
+        getWorldPos(world_row, &section, &block_size, &is_safe, &is_river, &offset);
+        
+        // Variability increases with section
+        int var = section;  // 0 at start, grows
+        if (var > 8) var = 8;
+
+        if (type == LANE_ROAD) {
+            // Cars: 2-4, more likely to have more at higher sections (increased base frequency)
+            l->obj_count = 2 + (int)(rowHash(world_row, 1) % (3 + var)) / (2 + var/2);
+            if (l->obj_count > MAX_OBJS) l->obj_count = MAX_OBJS;
+            // Car widths: base 4-8, variability grows, but shrinks if speed is very high
+            for (int j = 0; j < l->obj_count; j++) {
+                int base_w = 4 + (int)(rowHash(world_row, 10 + j) % 5);
+                int extra = (int)(rowHash(world_row, 50 + j) % (1 + var));
+                
+                // If this lane is moving very fast (low ms/pixel), shrink the cars
+                // so the game remains possible.
+                int speed_shrink = 0;
+                if (l->speed < 60) speed_shrink = 2;
+                else if (l->speed < 80) speed_shrink = 1;
+                
+                l->obj_w[j] = base_w + extra - speed_shrink;
+                if (l->obj_w[j] < 3) l->obj_w[j] = 3;  // absolute min car size
+                if (l->obj_w[j] > 14) l->obj_w[j] = 14;
+            }
+        } else {
+            // Logs: 1-3 (decreased frequency by ~20%)
+            // We use 1 + a random number 0-2 (skewed slightly higher to not make it impossible)
+            int r = (int)(rowHash(world_row, 2) % 10);
+            l->obj_count = (r < 2) ? 1 : ((r < 7) ? 2 : 3);
+            if (l->obj_count > MAX_OBJS) l->obj_count = MAX_OBJS;
+            for (int j = 0; j < l->obj_count; j++) {
+                // Logs base width 6-13 (much smaller average)
+                int base_w = 6 + (int)(rowHash(world_row, 20 + j) % 8);
+                // In higher sections, chance for logs to be extremely small,
+                // but some can remain average size for variety.
+                int shrink = (int)(rowHash(world_row, 60 + j) % (1 + var)); 
+                l->obj_w[j] = base_w - shrink;
+                
+                // Allow very small boats, especially when fast
+                if (l->obj_w[j] < 2) l->obj_w[j] = 2; 
+                // Cap max size so they don't get too big
+                if (l->obj_w[j] > 14) l->obj_w[j] = 14; 
+            }
+        }
+
+        // Randomized spacing with variable gaps
+        int total_obj_width = 0;
+        for (int j = 0; j < l->obj_count; j++) total_obj_width += l->obj_w[j];
+        int total_gap = BOARD_W - total_obj_width;
+        if (total_gap < l->obj_count * 4) total_gap = l->obj_count * 4;
+
+        int cursor = (int)(rowHash(world_row, 42) % 20);  // random start offset
         for (int j = 0; j < l->obj_count; j++) {
-            l->obj_x[j] = j * spacing + (world_row * 7) % 13; // pseudo-random offset
+            l->obj_x[j] = cursor;
+            // Variable gap: base even gap +/- random spread
+            int base_gap = total_gap / l->obj_count;
+            int spread = 1 + var * 2;  // more spread at higher sections
+            int gap = base_gap + (int)(rowHash(world_row, 30 + j) % spread) - spread / 2;
+            if (gap < 4) gap = 4;
+            cursor += l->obj_w[j] + gap;
+        }
+        // Wrap positions into valid range
+        for (int j = 0; j < l->obj_count; j++) {
+            l->obj_x[j] = l->obj_x[j] % (BOARD_W + 10);
         }
     }
 
@@ -193,8 +313,8 @@ void froggerSetDirection(int dx, int dy) {
         }
         // Scroll camera if frog is too high on screen
         int frog_screen_row = frog_world_row - camera_row;
-        if (frog_screen_row > VISIBLE_ROWS - 4) {
-            camera_row = frog_world_row - (VISIBLE_ROWS - 4);
+        if (frog_screen_row > 6) { // Start following much earlier
+            camera_row = frog_world_row - 6;
         }
     } else if (dy > 0) { // DOWN = go back
         if (frog_world_row > camera_row) {
@@ -245,9 +365,9 @@ void froggerLoop(unsigned long now) {
             // Respawn at nearest safe row at or below current position
             // Find the nearest safe row <= frog_world_row
             while (frog_world_row > 0) {
-                int type, dir, speed, obj_count, obj_w;
+                int type, dir, speed;
                 uint8_t cr, cg, cb;
-                getLaneInfo(frog_world_row, &type, &dir, &speed, &cr, &cg, &cb, &obj_count, &obj_w);
+                getLaneInfo(frog_world_row, &type, &dir, &speed, &cr, &cg, &cb);
                 if (type == LANE_SAFE) break;
                 frog_world_row--;
             }
@@ -274,9 +394,9 @@ void froggerLoop(unsigned long now) {
                     l->obj_x[j] += l->dir;
                     // Wrap
                     if (l->dir > 0 && l->obj_x[j] > BOARD_W) {
-                        l->obj_x[j] = -l->obj_w;
+                        l->obj_x[j] = -l->obj_w[j];
                     }
-                    if (l->dir < 0 && l->obj_x[j] + l->obj_w < 0) {
+                    if (l->dir < 0 && l->obj_x[j] + l->obj_w[j] < 0) {
                         l->obj_x[j] = BOARD_W;
                     }
                 }
@@ -292,7 +412,7 @@ void froggerLoop(unsigned long now) {
         if (cur->type == LANE_ROAD) {
             for (int j = 0; j < cur->obj_count; j++) {
                 int ox = cur->obj_x[j];
-                if (frog_x + FROG_W > ox && frog_x < ox + cur->obj_w) {
+                if (frog_x + FROG_W > ox && frog_x < ox + cur->obj_w[j]) {
                     killFrog(now);
                     break;
                 }
@@ -302,7 +422,7 @@ void froggerLoop(unsigned long now) {
             for (int j = 0; j < cur->obj_count; j++) {
                 int ox = cur->obj_x[j];
                 int fcx = frog_x + FROG_W / 2;
-                if (fcx >= ox && fcx < ox + cur->obj_w) {
+                if (fcx >= ox && fcx < ox + cur->obj_w[j]) {
                     on_log = true;
                     break;
                 }
@@ -363,7 +483,7 @@ void froggerLoop(unsigned long now) {
         // Objects
         for (int j = 0; j < l->obj_count; j++) {
             int ox = l->obj_x[j];
-            for (int dx = 0; dx < l->obj_w; dx++) {
+            for (int dx = 0; dx < l->obj_w[j]; dx++) {
                 int px = ox + dx;
                 if (px >= 0 && px < BOARD_W) {
                     for (int dy = 0; dy < ROW_H; dy++) {
