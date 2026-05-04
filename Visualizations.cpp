@@ -7,7 +7,7 @@ extern void updateScreenCallback(void);
 extern void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue);
 
 static int current_vis = 0;
-static const int NUM_VIS = 6;
+static const int NUM_VIS = 7;
 
 // Helper: HSV to RGB
 static void HSVtoRGB(float h, float s, float v, uint8_t* r, uint8_t* g, uint8_t* b) {
@@ -498,9 +498,174 @@ static void drawCubicMatrix(unsigned long now) {
                 // Neon glow pop
                 val = sqrtf(val);
                 
-                uint8_t r, g, b;
-                HSVtoRGB(hue, 1.0f, val, &r, &g, &b);
-                drawPixelCallback(px, py, r, g, b);
+                uint8_t r_col, g_col, b_col;
+                HSVtoRGB(hue, 1.0f, val, &r_col, &g_col, &b_col);
+                drawPixelCallback(px, py, r_col, g_col, b_col);
+            } else {
+                drawPixelCallback(px, py, 0, 0, 0); // Background void
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------
+// VISUALIZATION 7: ALIEN CORAL REEF (Gyroid Caverns)
+// -----------------------------------------------------------
+
+static float mapGyroidCavern(float p_x, float p_y, float p_z, float t) {
+    float scale = 1.5f;
+    float gx = p_x * scale;
+    float gy = p_y * scale;
+    float gz = p_z * scale;
+    
+    // Add domain warping so the cavern walls melt and breathe
+    gx += 0.5f * sinf(gy * 0.5f + t);
+    gy += 0.5f * sinf(gz * 0.5f - t);
+    gz += 0.5f * sinf(gx * 0.5f + t);
+    
+    // The mathematical Gyroid SDF formula
+    float g = sinf(gx)*cosf(gy) + sinf(gy)*cosf(gz) + sinf(gz)*cosf(gx);
+    
+    // Greatly reduced thickness to make the coral highly porous
+    float thickness = 0.05f + 0.05f * sinf(t * 1.5f);
+    float d = (fabsf(g) - thickness) / scale;
+    d *= 0.6f; // Safety multiplier
+    
+    // We carve a massive, breathing cylindrical cavern straight down the Z axis
+    float tunnel_radius = 1.8f + 0.4f * sinf(p_z * 0.5f + t);
+    float tunnel = sqrtf(p_x*p_x + p_y*p_y) - tunnel_radius;
+    
+    return fmaxf(d, -tunnel);
+}
+
+// Calculate the 3D normal vector at the surface for realistic lighting!
+static void getGyroidNormal(float p_x, float p_y, float p_z, float t, float* nx, float* ny, float* nz) {
+    float eps = 0.02f;
+    float d = mapGyroidCavern(p_x, p_y, p_z, t);
+    *nx = mapGyroidCavern(p_x + eps, p_y, p_z, t) - d;
+    *ny = mapGyroidCavern(p_x, p_y + eps, p_z, t) - d;
+    *nz = mapGyroidCavern(p_x, p_y, p_z + eps, t) - d;
+    
+    float len = sqrtf((*nx)*(*nx) + (*ny)*(*ny) + (*nz)*(*nz));
+    if (len > 0.0001f) {
+        *nx /= len; *ny /= len; *nz /= len;
+    }
+}
+
+static void drawGyroidCavern(unsigned long now) {
+    float t = now / 1000.0f;
+    
+    // Camera setup: endlessly flying forward
+    float ro_x = 0.0f;
+    float ro_y = 0.0f;
+    float ro_z = t * 4.0f; 
+    
+    // Slight smooth camera path weaving (tightened to prevent clipping)
+    ro_x += 0.3f * sinf(t * 0.4f);
+    ro_y += 0.3f * cosf(t * 0.3f);
+    
+    int max_steps = 35; 
+    float max_dist = 18.0f;
+    
+    // Precalculate camera roll/pitch for dynamic flight
+    float cam_s = sinf(t * 0.3f);
+    float cam_c = cosf(t * 0.3f);
+    float pitch_s = sinf(t * 0.2f);
+    float pitch_c = cosf(t * 0.2f);
+    
+    for (int py = 0; py < 64; py++) {
+        for (int px = 0; px < 64; px++) {
+            // Ray direction
+            float rd_x = (px - 31.5f) / 32.0f;
+            float rd_y = (py - 31.5f) / 32.0f;
+            float rd_z = 1.0f;
+            
+            float len = sqrtf(rd_x*rd_x + rd_y*rd_y + rd_z*rd_z);
+            rd_x /= len; rd_y /= len; rd_z /= len;
+            
+            // Camera Roll
+            float trx = rd_x * cam_c - rd_y * cam_s;
+            float try_ = rd_x * cam_s + rd_y * cam_c;
+            rd_x = trx; rd_y = try_;
+            
+            // Camera Pitch
+            float trz = rd_z * pitch_c - rd_y * pitch_s;
+            try_ = rd_z * pitch_s + rd_y * pitch_c;
+            rd_z = trz; rd_y = try_;
+            
+            float dist = 0.0f;
+            int steps = 0;
+            float p_x = 0, p_y = 0, p_z = 0;
+            
+            // 3D Raymarching Engine
+            for (steps = 0; steps < max_steps; steps++) {
+                p_x = ro_x + rd_x * dist;
+                p_y = ro_y + rd_y * dist;
+                p_z = ro_z + rd_z * dist;
+                
+                float d = mapGyroidCavern(p_x, p_y, p_z, t);
+                
+                if (d < 0.02f) break; // Hit the wall
+                dist += d;
+                if (dist > max_dist) break; // Lost in the deep cave
+            }
+            
+            if (dist < max_dist) {
+                // Get the true 3D surface normal for lighting
+                float nx, ny, nz;
+                getGyroidNormal(p_x, p_y, p_z, t, &nx, &ny, &nz);
+                
+                // Cinematic Dual-Directional Lighting!
+                // Light 1: Cyan (orbiting slowly)
+                float l1_x = cosf(t * 0.8f);
+                float l1_y = sinf(t * 0.8f);
+                float l1_z = -0.5f;
+                // Normalize light 1
+                float l1_len = sqrtf(l1_x*l1_x + l1_y*l1_y + l1_z*l1_z);
+                l1_x /= l1_len; l1_y /= l1_len; l1_z /= l1_len;
+                
+                float diff1 = nx*l1_x + ny*l1_y + nz*l1_z;
+                if (diff1 < 0.0f) diff1 = 0.0f;
+                
+                // Light 2: Magenta (opposite side, orbiting)
+                float l2_x = -l1_x, l2_y = -l1_y, l2_z = 0.5f;
+                float diff2 = nx*l2_x + ny*l2_y + nz*l2_z;
+                if (diff2 < 0.0f) diff2 = 0.0f;
+                
+                // Base ambient color (Deep Void Purple)
+                float r_f = 0.05f;
+                float g_f = 0.0f;
+                float b_f = 0.12f;
+                
+                // Add Cyan light reflection
+                r_f += diff1 * 0.0f;
+                g_f += diff1 * 0.8f;
+                b_f += diff1 * 1.0f;
+                
+                // Add Magenta light reflection
+                r_f += diff2 * 1.0f;
+                g_f += diff2 * 0.0f;
+                b_f += diff2 * 0.8f;
+                
+                // Add Toxic Bioluminescent Crevice Glow!
+                // If it took many steps, the ray got trapped in a deep crevice
+                float glow = ((float)steps / max_steps);
+                glow = glow * glow * 1.5f; // Exponential pop
+                
+                r_f += glow * 0.8f; // Toxic Yellow-Green
+                g_f += glow * 1.0f;
+                b_f += glow * 0.0f;
+                
+                // Apply Distance Fog
+                float fog = 1.0f - (dist / max_dist);
+                r_f *= fog; g_f *= fog; b_f *= fog;
+                
+                // Clamp to prevent overflow
+                if (r_f > 1.0f) r_f = 1.0f;
+                if (g_f > 1.0f) g_f = 1.0f;
+                if (b_f > 1.0f) b_f = 1.0f;
+                
+                drawPixelCallback(px, py, (uint8_t)(r_f * 255.0f), (uint8_t)(g_f * 255.0f), (uint8_t)(b_f * 255.0f));
             } else {
                 drawPixelCallback(px, py, 0, 0, 0); // Background void
             }
@@ -523,6 +688,8 @@ void visLoop(unsigned long now) {
         drawMandelbrot(now);
     } else if (current_vis == 5) {
         drawCubicMatrix(now);
+    } else if (current_vis == 6) {
+        drawGyroidCavern(now);
     }
     
     updateScreenCallback();
