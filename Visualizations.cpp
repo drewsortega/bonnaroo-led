@@ -7,7 +7,7 @@ extern void updateScreenCallback(void);
 extern void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue);
 
 static int current_vis = 0;
-static const int NUM_VIS = 5;
+static const int NUM_VIS = 6;
 
 // Helper: HSV to RGB
 static void HSVtoRGB(float h, float s, float v, uint8_t* r, uint8_t* g, uint8_t* b) {
@@ -357,6 +357,157 @@ static void drawMandelbrot(unsigned long now) {
     }
 }
 
+// -----------------------------------------------------------
+// VISUALIZATION 6: INFINITE CUBIC MATRIX (3D Raymarching)
+// -----------------------------------------------------------
+
+static float boxSDF(float x, float y, float z, float s) {
+    float bx = fabsf(x) - s;
+    float by = fabsf(y) - s;
+    float bz = fabsf(z) - s;
+    float max_xyz = fmaxf(bx, fmaxf(by, bz));
+    float dx = bx > 0 ? bx : 0;
+    float dy = by > 0 ? by : 0;
+    float dz = bz > 0 ? bz : 0;
+    return sqrtf(dx*dx + dy*dy + dz*dz) + fminf(max_xyz, 0.0f);
+}
+
+static float mapMenger(float x, float y, float z, float t) {
+    // Base infinite repeating grid of cubes using modulo logic
+    float spacing = 3.0f; // Increased spacing for larger hallways
+    
+    // Offset by 30000 (a clean multiple of 3) so that x=0, y=0 perfectly aligns 
+    // with the exact center of the empty hallway between the cubes!
+    float cell_x = fmodf(x + 30000.0f, spacing) - spacing * 0.5f;
+    float cell_y = fmodf(y + 30000.0f, spacing) - spacing * 0.5f;
+    float cell_z = fmodf(z + 30000.0f, spacing) - spacing * 0.5f;
+    
+    // Base cube size decreased to 0.8 so they don't fill the entire screen
+    float d = boxSDF(cell_x, cell_y, cell_z, 0.8f);
+    
+    float s = 1.0f;
+    // Animate the size of the holes. This causes the solid cube to shatter 
+    // into thousands of tiny edges, then seamlessly merge back into a solid block!
+    float hole_size = 0.2f + 0.2f * sinf(t * 1.5f);
+    
+    for (int m = 0; m < 3; m++) {
+        // Create repeating cross patterns to subtract from the cube
+        float ax = fabsf(cell_x * s);
+        float ay = fabsf(cell_y * s);
+        float az = fabsf(cell_z * s);
+        
+        ax = fmodf(ax + 1.0f, 2.0f) - 1.0f;
+        ay = fmodf(ay + 1.0f, 2.0f) - 1.0f;
+        az = fmodf(az + 1.0f, 2.0f) - 1.0f;
+        
+        float r = hole_size;
+        float dx = fabsf(ax) - r;
+        float dy = fabsf(ay) - r;
+        float dz = fabsf(az) - r;
+        
+        // Find the intersection of the 3 cylinders to create a 3D cross
+        float cxy = fmaxf(dx, dy);
+        float cxz = fmaxf(dx, dz);
+        float cyz = fmaxf(dy, dz);
+        float cross = fminf(cxy, fminf(cxz, cyz));
+        
+        // Subtract the cross from the cube distance
+        d = fmaxf(d, -cross / s);
+        
+        s *= 3.0f; // Scale up for the next fractal iteration
+    }
+    return d;
+}
+
+static void drawCubicMatrix(unsigned long now) {
+    float t = now / 1000.0f;
+    
+    // Camera setup: endlessly flying forward through the infinite grid
+    float ro_x = 0.0f;
+    float ro_y = 0.0f;
+    float ro_z = t * 3.0f; 
+    
+    // Reduced wobble so we stay cleanly inside the hallway gaps and don't crash into walls
+    ro_x += 0.3f * sinf(t * 0.5f);
+    ro_y += 0.3f * cosf(t * 0.3f);
+    
+    int max_steps = 30; // Max ray steps for 64x64 to guarantee 60fps
+    float max_dist = 18.0f; // Look a bit deeper into the fog
+    
+    // Precalculate camera roll and pitch
+    float cam_s = sinf(t * 0.4f);
+    float cam_c = cosf(t * 0.4f);
+    float pitch_s = sinf(t * 0.2f);
+    float pitch_c = cosf(t * 0.2f);
+    
+    for (int py = 0; py < 64; py++) {
+        for (int px = 0; px < 64; px++) {
+            // Ray direction (FOV setup)
+            float rd_x = (px - 31.5f) / 32.0f;
+            float rd_y = (py - 31.5f) / 32.0f;
+            float rd_z = 1.0f; 
+            
+            // Normalize
+            float len = sqrtf(rd_x*rd_x + rd_y*rd_y + rd_z*rd_z);
+            rd_x /= len; rd_y /= len; rd_z /= len;
+            
+            // Apply Camera Roll
+            float trx = rd_x * cam_c - rd_y * cam_s;
+            float try_ = rd_x * cam_s + rd_y * cam_c;
+            rd_x = trx; rd_y = try_;
+            
+            // Apply Camera Pitch/Yaw to organically look around while flying
+            float trz = rd_z * pitch_c - rd_y * pitch_s;
+            try_ = rd_z * pitch_s + rd_y * pitch_c;
+            rd_z = trz; rd_y = try_;
+            
+            float dist = 0.0f;
+            int steps = 0;
+            
+            // 3D Raymarching Engine
+            for (steps = 0; steps < max_steps; steps++) {
+                float p_x = ro_x + rd_x * dist;
+                float p_y = ro_y + rd_y * dist;
+                float p_z = ro_z + rd_z * dist;
+                
+                // Add minor domain warping to make the cubes melt slightly
+                p_x += 0.1f * sinf(p_z * 1.5f + t);
+                p_y += 0.1f * cosf(p_z * 1.5f - t);
+                
+                // Scale space slightly to fit more cubes in view
+                float scale = 1.3f;
+                float d = mapMenger(p_x * scale, p_y * scale, p_z * scale, t) / scale;
+                
+                if (d < 0.01f) break; // We hit the surface of a cube!
+                dist += d;
+                if (dist > max_dist) break; // Lost in the fog
+            }
+            
+            if (dist < max_dist) {
+                // Color mapping
+                float hue = fmodf(dist * 12.0f + t * 60.0f, 360.0f);
+                if (hue < 0) hue += 360.0f;
+                
+                // Ambient Occlusion: crevices (high steps) glow darker, edges are bright
+                float val = 1.0f - ((float)steps / max_steps);
+                
+                // Fog: fade smoothly to black in the distance to hide pop-in
+                float fog = 1.0f - (dist / max_dist);
+                val *= fog;
+                
+                // Neon glow pop
+                val = sqrtf(val);
+                
+                uint8_t r, g, b;
+                HSVtoRGB(hue, 1.0f, val, &r, &g, &b);
+                drawPixelCallback(px, py, r, g, b);
+            } else {
+                drawPixelCallback(px, py, 0, 0, 0); // Background void
+            }
+        }
+    }
+}
+
 void visLoop(unsigned long now) {
     screenClearCallback();
     
@@ -370,6 +521,8 @@ void visLoop(unsigned long now) {
         drawGameOfLife(now);
     } else if (current_vis == 4) {
         drawMandelbrot(now);
+    } else if (current_vis == 5) {
+        drawCubicMatrix(now);
     }
     
     updateScreenCallback();
