@@ -299,6 +299,12 @@ static void drawMandelbrot(unsigned long now) {
             float v = (theta + M_PI) / (2.0f * M_PI);
             v = v * 5.0f + t * 0.3f; // 5 spiral arms, slowly spinning
             
+            // LIQUID GRID DISTORTION!
+            // We warp the coordinate space before wrapping it. This causes the "seams"
+            // and the areas between each fractal to stretch, wobble, and squirm dynamically!
+            u += 0.3f * sinf(theta * 4.0f + t * 2.5f);
+            v += 0.3f * cosf(logf(r) * 5.0f - t * 1.8f);
+            
             // MODULO LOGIC: This wraps the tunnel endlessly!
             float u_wrap = fmodf(u + 10000.0f, 1.0f);
             float v_wrap = fmodf(v + 10000.0f, 1.0f);
@@ -306,12 +312,20 @@ static void drawMandelbrot(unsigned long now) {
             // Map the wrapped cell back to a fractal coordinate space
             float z_re = (u_wrap - 0.5f) * 4.0f;
             float z_im = (v_wrap - 0.5f) * 4.0f;
+            
+            // CONTINUOUS SPATIAL MUTATION!
+            // We perturb the Julia constant based on the physical angle (theta)
+            // and the physical depth (log(r)). This guarantees every single section 
+            // of the tunnel morphs into a completely unique organic shape!
+            float local_c_re = julia_c_re + 0.15f * sinf(logf(r) * 4.0f + t * 2.0f);
+            float local_c_im = julia_c_im + 0.15f * cosf(theta * 3.0f - t * 1.5f);
+            
             int iter = 0;
             
             // Run the fractal math on the tunnel walls
             while (z_re * z_re + z_im * z_im < 4.0f && iter < max_iter) {
-                float next_re = z_re * z_re - z_im * z_im + julia_c_re;
-                float next_im = 2.0f * z_re * z_im + julia_c_im;
+                float next_re = z_re * z_re - z_im * z_im + local_c_re;
+                float next_im = 2.0f * z_re * z_im + local_c_im;
                 z_re = next_re;
                 z_im = next_im;
                 iter++;
