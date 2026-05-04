@@ -151,9 +151,13 @@ public:
 
 // Serial mock (prints to stdout)
 class SerialClass {
+private:
+    static const int BUF_SIZE = 64;
+    char _buf[BUF_SIZE];
+    int _head = 0;
+    int _tail = 0;
 public:
     void begin(unsigned long baud) {
-        // Nothing to do for simulator
         (void)baud;
     }
     
@@ -174,8 +178,22 @@ public:
     void println(unsigned long n) { printf("%lu\n", n); }
     void println(double n) { printf("%f\n", n); }
     
-    int available() { return 0; }
-    int read() { return -1; }
+    int available() {
+        return (_head - _tail + BUF_SIZE) % BUF_SIZE;
+    }
+    int read() {
+        if (_head == _tail) return -1;
+        char c = _buf[_tail];
+        _tail = (_tail + 1) % BUF_SIZE;
+        return c;
+    }
+    void inject(char c) {
+        int next = (_head + 1) % BUF_SIZE;
+        if (next != _tail) {
+            _buf[_head] = c;
+            _head = next;
+        }
+    }
     size_t write(const char *buf) { printf("%s", buf); return strlen(buf); }
     int readBytesUntil(char terminator, char *buffer, size_t length) { return 0; }
 

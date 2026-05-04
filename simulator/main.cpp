@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <string>
 #include <cstdlib>
+#include <cmath>
 
 // Include stb_image implementation
 #define STB_IMAGE_IMPLEMENTATION
@@ -201,11 +202,13 @@ void SmartMatrixShim::updateSimulator(SDL_Renderer* renderer) {
         for (int x = 0; x < width; x++) {
             rgb24& pixel = rowBuffer[x];
             
-            // Apply brightness (basic scaling)
-            float factor = brightness / 255.0f;
-            uint8_t r = (uint8_t)(pixel.red * factor);
-            uint8_t g = (uint8_t)(pixel.green * factor);
-            uint8_t b = (uint8_t)(pixel.blue * factor);
+            // Gamma-correct each color channel to simulate LED emissive appearance.
+            // LEDs make dark colors look vivid; monitors crush them. Applying
+            // inverse gamma (0.55) to each channel lifts darks to match.
+            float brt = brightness / 255.0f;
+            uint8_t r = (uint8_t)(powf(pixel.red / 255.0f, 0.55f) * 255.0f * brt);
+            uint8_t g = (uint8_t)(powf(pixel.green / 255.0f, 0.55f) * 255.0f * brt);
+            uint8_t b = (uint8_t)(powf(pixel.blue / 255.0f, 0.55f) * 255.0f * brt);
             
             // Simulator rotation logic (reused from before)
             int dispX = x, dispY = y;
@@ -349,101 +352,27 @@ int main(int argc, char* argv[]) {
             }
             
             if (event.type == SDL_KEYDOWN) {
-                IRRawDataType code = 0;
+                char ble_char = 0;
                 
                 switch (event.key.keysym.sym) {
-                    // Volume/brightness controls
-                    case SDLK_MINUS:
-                    case SDLK_KP_MINUS:
-                        code = 0xFF00BF00;  // BUT_VOL_DOWN
-                        break;
-                    case SDLK_EQUALS:
-                    case SDLK_PLUS:
-                    case SDLK_KP_PLUS:
-                        code = 0xFD02BF00;  // BUT_VOL_UP
-                        break;
-                    
-                    // Navigation
-                    case SDLK_LEFT:
-                        code = 0xF708BF00;  // BUT_LEFT
-                        break;
-                    case SDLK_RIGHT:
-                        code = 0xF50ABF00;  // BUT_RIGHT
-                        break;
-                    case SDLK_UP:
-                        code = 0xFD02BF00;  // BUT_VOL_UP (Brightness Up)
-                        break;
-                    case SDLK_DOWN:
-                        code = 0xFF00BF00;  // BUT_VOL_DOWN (Brightness Down)
-                        break;
-                    
-                    // Action buttons
+                    case SDLK_LEFT:  ble_char = 'l'; break;
+                    case SDLK_RIGHT: ble_char = 'r'; break;
+                    case SDLK_UP:    ble_char = 'u'; break;
+                    case SDLK_DOWN:  ble_char = 'd'; break;
                     case SDLK_RETURN:
                     case SDLK_KP_ENTER:
-                        code = 0xF609BF00;  // BUT_ENTER
-                        break;
-                    case SDLK_SPACE:
-                        code = 0xFE01BF00;  // BUT_PLAY
-                        break;
-                    case SDLK_BACKSPACE:
-                    case SDLK_ESCAPE:
-                        code = 0xF10EBF00;  // BUT_BACK
-                        break;
-                    case SDLK_s:
-                        code = 0xF906BF00;  // BUT_STOP
-                        break;
-                    
-                    // Number keys
-                    case SDLK_0:
-                    case SDLK_KP_0:
-                        code = 0xF30CBF00;  // BUT_0
-                        break;
-                    case SDLK_1:
-                    case SDLK_KP_1:
-                        code = 0xEF10BF00;  // BUT_1
-                        break;
-                    case SDLK_2:
-                    case SDLK_KP_2:
-                        code = 0xEE11BF00;  // BUT_2
-                        break;
-                    case SDLK_3:
-                    case SDLK_KP_3:
-                        code = 0xED12BF00;  // BUT_3
-                        break;
-                    case SDLK_4:
-                    case SDLK_KP_4:
-                        code = 0xEB14BF00;  // BUT_4
-                        break;
-                    case SDLK_5:
-                    case SDLK_KP_5:
-                        code = 0xEA15BF00;  // BUT_5
-                        break;
-                    case SDLK_6:
-                    case SDLK_KP_6:
-                        code = 0xE916BF00;  // BUT_6
-                        break;
-                    case SDLK_7:
-                    case SDLK_KP_7:
-                        code = 0xE718BF00;  // BUT_7
-                        break;
-                    case SDLK_8:
-                    case SDLK_KP_8:
-                        code = 0xE619BF00;  // BUT_8
-                        break;
-                    case SDLK_9:
-                    case SDLK_KP_9:
-                        code = 0xE51ABF00;  // BUT_9
-                        break;
-                    
-                    // Quit on Q
+                        ble_char = 'e'; break;
+                    case SDLK_m:     ble_char = 'm'; break;
+                    case SDLK_w:     ble_char = '+'; break;
+                    case SDLK_s:     ble_char = '-'; break;
                     case SDLK_q:
                         g_running = false;
-                        code = 0xFFFFFFFF;  // Special quit code
                         break;
+                    default: break;
                 }
                 
-                if (code != 0) {
-                    IrReceiver.injectCode(code);
+                if (ble_char != 0) {
+                    Serial5.inject(ble_char);
                 }
             }
         }
