@@ -532,11 +532,15 @@ void froggerLoop(unsigned long now) {
 
     // Overlay text
     if (frog_state == FROG_WAITING) {
+        lbDrawBox(10, 28, 31, 9, 0, 0, 0, true, 255, 255, 255);
         lbDrawString(12, 30, "FROGGER", 255, 255, 0);
+        lbDrawBox(2, 40, 47, 9, 0, 0, 0, true, 255, 255, 255);
         lbDrawString(4, 42, "PRESS ENTER", 255, 255, 255);
     } else if (frog_state == FROG_INTRO) {
+        lbDrawBox(10, 32, 39, 9, 0, 0, 0, true, 255, 255, 255);
         lbDrawString(12, 34, "GET READY", 255, 255, 0);
     } else if (frog_state == FROG_GAMEOVER) {
+        lbDrawBox(10, 32, 39, 9, 0, 0, 0, true, 255, 255, 255);
         lbDrawString(12, 34, "GAME OVER", 255, 0, 0);
     }
 

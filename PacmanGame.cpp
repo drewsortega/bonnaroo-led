@@ -469,15 +469,19 @@ void pacmanLoop(unsigned long now) {
         if (game_state == STATE_WAITING) {
             int rx = OFFSET_X + 10;
             int ry = OFFSET_Y + 14 * TILE_S;
+            lbDrawBox(rx - 2, ry - 2, 27, 9, 0, 0, 0, true, 255, 255, 255);
             drawString(rx, ry, "PACMAN", 255, 255, 0);
+            lbDrawBox(rx - 10, ry + 8, 47, 9, 0, 0, 0, true, 255, 255, 255);
             drawString(rx - 8, ry + 10, "PRESS ENTER", 255, 255, 255);
         } else if (game_state == STATE_INTRO) {
             int rx = OFFSET_X + 14;
             int ry = OFFSET_Y + 16 * TILE_S;
+            lbDrawBox(rx - 2, ry - 2, 39, 9, 0, 0, 0, true, 255, 255, 255);
             drawString(rx, ry, "GET READY", 255, 255, 0);
         } else if (game_state == STATE_GAMEOVER) {
             int rx = OFFSET_X + 14;
             int ry = OFFSET_Y + 16 * TILE_S;
+            lbDrawBox(rx - 2, ry - 2, 39, 9, 0, 0, 0, true, 255, 255, 255);
             drawString(rx, ry, "GAME OVER", 255, 0, 0);
             
             drawPixelCallback(px, py, 255, 0, 0);

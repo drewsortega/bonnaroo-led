@@ -142,6 +142,18 @@ void lbDrawNumber(int x, int y, int num, uint8_t r, uint8_t g, uint8_t b) {
     }
 }
 
+void lbDrawBox(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b, bool outline, uint8_t or_r, uint8_t or_g, uint8_t or_b) {
+    for (int dy = 0; dy < h; dy++) {
+        for (int dx = 0; dx < w; dx++) {
+            if (outline && (dx == 0 || dy == 0 || dx == w - 1 || dy == h - 1)) {
+                drawPixelCallback(x + dx, y + dy, or_r, or_g, or_b);
+            } else {
+                drawPixelCallback(x + dx, y + dy, r, g, b);
+            }
+        }
+    }
+}
+
 struct LeaderboardEntry {
     char name[5];
     int score;

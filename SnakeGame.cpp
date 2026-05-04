@@ -190,11 +190,15 @@ void snakeLoop(unsigned long now) {
     }
     
     if (snake_state == SNAKE_STATE_WAITING) {
+        lbDrawBox(14, 22, 23, 9, 0, 0, 0, true, 255, 255, 255);
         lbDrawString(16, 24, "SNAKE", 255, 255, 0);
+        lbDrawBox(2, 36, 47, 9, 0, 0, 0, true, 255, 255, 255);
         lbDrawString(4, 38, "PRESS ENTER", 255, 255, 255);
     } else if (snake_state == SNAKE_STATE_INTRO) {
+        lbDrawBox(10, 28, 39, 9, 0, 0, 0, true, 255, 255, 255);
         lbDrawString(12, 30, "GET READY", 255, 255, 0);
     } else if (snake_state == SNAKE_STATE_GAMEOVER) {
+        lbDrawBox(10, 28, 39, 9, 0, 0, 0, true, 255, 255, 255);
         lbDrawString(12, 30, "GAME OVER", 255, 0, 0);
         
         // Red X over the head
