@@ -7,7 +7,7 @@ extern void updateScreenCallback(void);
 extern void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue);
 
 static int current_vis = 0;
-static const int NUM_VIS = 3;
+static const int NUM_VIS = 4;
 
 // Helper: HSV to RGB
 static void HSVtoRGB(float h, float s, float v, uint8_t* r, uint8_t* g, uint8_t* b) {
@@ -143,6 +143,132 @@ static void drawJulia(unsigned long now) {
     }
 }
 
+static uint8_t gol_grid_current[64][64];
+static uint8_t gol_grid_next[64][64];
+static uint8_t gol_fade[64][64];
+static unsigned long gol_last_update = 0;
+static unsigned long gol_last_seed = 0;
+static void addRandomPocket(int cx, int cy) {
+    for (int dy = -5; dy <= 5; dy++) {
+        for (int dx = -5; dx <= 5; dx++) {
+            if ((rand() % 100) < 30) {
+                int x = (cx + dx + 64) % 64;
+                int y = (cy + dy + 64) % 64;
+                gol_grid_current[y][x] = 1;
+            }
+        }
+    }
+}
+
+static unsigned long gol_stagnation_timer = 0;
+static int gol_last_active_count = 0;
+
+static void drawGameOfLife(unsigned long now) {
+    if (gol_last_seed == 0) {
+        // Randomly seed full board (V1 style)
+        for (int y = 0; y < 64; y++) {
+            for (int x = 0; x < 64; x++) {
+                gol_grid_current[y][x] = (rand() % 100) < 20 ? 1 : 0;
+                gol_fade[y][x] = 0;
+            }
+        }
+
+        gol_last_seed = now;
+        gol_last_update = now;
+        gol_stagnation_timer = now;
+    }
+
+    // Step every 50ms for smooth fast movement, typical for rave visuals
+    if (now - gol_last_update > 50) {
+        int active_cells = 0;
+        for (int y = 0; y < 64; y++) {
+            for (int x = 0; x < 64; x++) {
+                int neighbors = 0;
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        if (dx == 0 && dy == 0) continue;
+                        int nx = (x + dx + 64) % 64;
+                        int ny = (y + dy + 64) % 64;
+                        neighbors += gol_grid_current[ny][nx];
+                    }
+                }
+                
+                if (gol_grid_current[y][x]) {
+                    if (neighbors == 2 || neighbors == 3) {
+                        gol_grid_next[y][x] = 1;
+                        active_cells++;
+                    } else {
+                        gol_grid_next[y][x] = 0;
+                    }
+                } else {
+                    if (neighbors == 3) {
+                        gol_grid_next[y][x] = 1;
+                        active_cells++;
+                    } else {
+                        gol_grid_next[y][x] = 0;
+                    }
+                }
+            }
+        }
+        
+        for (int y = 0; y < 64; y++) {
+            for (int x = 0; x < 64; x++) {
+                gol_grid_current[y][x] = gol_grid_next[y][x];
+                if (gol_grid_current[y][x]) {
+                    gol_fade[y][x] = 255;
+                } else {
+                    // Fade out
+                    if (gol_fade[y][x] > 15) {
+                        gol_fade[y][x] -= 15;
+                    } else {
+                        gol_fade[y][x] = 0;
+                    }
+                }
+            }
+        }
+        gol_last_update = now;
+        
+        if (active_cells != gol_last_active_count) {
+            gol_last_active_count = active_cells;
+            gol_stagnation_timer = now;
+        }
+        
+        static unsigned long gol_spawn_timer = 0;
+        // Inject a new pocket of life every 150ms to keep things constantly fresh and moving
+        if (now - gol_spawn_timer > 150) {
+            addRandomPocket(rand() % 64, rand() % 64);
+            gol_spawn_timer = now;
+        }
+        
+        // Anti-stagnation: If the board empties out or gets completely stuck
+        if (active_cells < 100 || (now - gol_stagnation_timer > 2000)) {
+            addRandomPocket(rand() % 64, rand() % 64);
+            addRandomPocket(rand() % 64, rand() % 64);
+            gol_stagnation_timer = now;
+            gol_last_active_count = -1; // force reset
+        }
+    }
+    
+    // Draw
+    float t = now / 1000.0f;
+    for (int y = 0; y < 64; y++) {
+        for (int x = 0; x < 64; x++) {
+            if (gol_fade[y][x] > 0) {
+                // Dynamic hue based on coordinates and time
+                float hue = fmod(x * 5.0f + y * 5.0f + t * 80.0f, 360.0f);
+                float val = gol_fade[y][x] / 255.0f;
+                // Square the value to make trails fade exponentially nicely
+                val = val * val;
+                uint8_t r, g, b;
+                HSVtoRGB(hue, 1.0f, val, &r, &g, &b);
+                drawPixelCallback(x, y, r, g, b);
+            } else {
+                drawPixelCallback(x, y, 0, 0, 0);
+            }
+        }
+    }
+}
+
 void visLoop(unsigned long now) {
     screenClearCallback();
     
@@ -152,6 +278,8 @@ void visLoop(unsigned long now) {
         drawConcentric(now);
     } else if (current_vis == 2) {
         drawJulia(now);
+    } else if (current_vis == 3) {
+        drawGameOfLife(now);
     }
     
     updateScreenCallback();
