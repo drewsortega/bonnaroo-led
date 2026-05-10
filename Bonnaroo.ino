@@ -404,8 +404,31 @@ void HandleIRInputs(unsigned long now) {
 }
 
 void HandleBLEInputs(unsigned long now) {
+    static String ble_buffer = "";
+    
     while (Serial5.available() > 0) {
         char c = Serial5.read();
+        
+        Serial.print("BLE Packet Received: '");
+        Serial.print(c);
+        Serial.print("' (ASCII: ");
+        Serial.print((int)c);
+        Serial.println(")");
+        
+        // Add to buffer for string matching
+        ble_buffer += c;
+        if (ble_buffer.length() > 20) {
+            ble_buffer.remove(0, ble_buffer.length() - 20); // Keep last 20 chars
+        }
+        
+        // Check for common connect/disconnect strings (like HM-10)
+        if (ble_buffer.endsWith("OK+CONN") || ble_buffer.endsWith("CONNECTED")) {
+            Serial.println("\n*** BLUETOOTH DEVICE CONNECTED ***\n");
+            ble_buffer = ""; // clear so we don't trigger again
+        } else if (ble_buffer.endsWith("OK+LOST") || ble_buffer.endsWith("DISCONNECTED")) {
+            Serial.println("\n*** BLUETOOTH DEVICE DISCONNECTED ***\n");
+            ble_buffer = "";
+        }
 
         switch (c) {
             case '-': adjustBrightness(-6); break;
