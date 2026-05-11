@@ -69,6 +69,7 @@
 #include "TetrisGame.h"
 #include "Leaderboard.h"
 #include "Visualizations.h"
+#include "TextDisplay.h"
 
 enum AppMode {
     MODE_GIF,
@@ -76,7 +77,8 @@ enum AppMode {
     MODE_PACMAN,
     MODE_FROGGER,
     MODE_TETRIS,
-    MODE_VISUALIZATIONS
+    MODE_VISUALIZATIONS,
+    MODE_TEXT
 };
 static AppMode current_mode = MODE_GIF;
 
@@ -497,29 +499,34 @@ void HandleBLEInputs(unsigned long now) {
                     
                     writeDebugScreen("Upload Complete!", now);
                     
-                    // Re-index GIFs
-                    num_files = enumerateGIFFiles("/gifs", false);
-                    
-                    // Change mode to GIF viewer
+                    // Change mode based on file uploaded
                     lbDeactivate();
-                    current_mode = MODE_GIF;
-                    
-                    // Find the index of the newly uploaded file
-                    for (int i = 0; i < num_files; i++) {
-                        char nameBuf[64];
-                        getGIFFilenameByIndex("/gifs", i, nameBuf);
-                        if (ble_upload_filename.equals(nameBuf)) {
-                            cur_image_idx = i;
-                            break;
+                    if (ble_upload_filename.equals("txt.bin")) {
+                        current_mode = MODE_TEXT;
+                        textInit(use_sd);
+                    } else {
+                        current_mode = MODE_GIF;
+                        
+                        // Re-index GIFs
+                        num_files = enumerateGIFFiles("/gifs", false);
+                        
+                        // Find the index of the newly uploaded file
+                        for (int i = 0; i < num_files; i++) {
+                            char nameBuf[64];
+                            getGIFFilenameByIndex("/gifs", i, nameBuf);
+                            if (ble_upload_filename.equals(nameBuf)) {
+                                cur_image_idx = i;
+                                break;
+                            }
                         }
+                        
+                        // Force refresh screen to start new GIF
+                        backgroundLayer.fillScreen(COLOR_BLACK);
+                        backgroundLayer.swapBuffers();
+                        backgroundLayer.fillScreen(COLOR_BLACK);
+                        backgroundLayer.swapBuffers();
+                        is_first_frame = true;
                     }
-                    
-                    // Force refresh screen to start new GIF
-                    backgroundLayer.fillScreen(COLOR_BLACK);
-                    backgroundLayer.swapBuffers();
-                    backgroundLayer.fillScreen(COLOR_BLACK);
-                    backgroundLayer.swapBuffers();
-                    is_first_frame = true;
                 }
             }
             continue; // Skip the rest of the loop
@@ -1011,6 +1018,8 @@ void loop() {
         tetrisLoop(now);
     } else if (current_mode == MODE_VISUALIZATIONS) {
         visLoop(now);
+    } else if (current_mode == MODE_TEXT) {
+        textLoop(now);
     } else {
         if (!use_sd) {
             drawImageNoSD(now);
