@@ -36,6 +36,10 @@
 
 #define SUPPRESS_ERROR_MESSAGE_FOR_BEGIN
 
+// Uncomment to use Adafruit Bluefruit LE UART Friend instead of HM-10
+#define USE_ADAFRUIT_BLUEFRUIT
+
+
 
 #ifdef SIMULATOR_MODE
   #include <GifDecoder.h>
@@ -780,6 +784,20 @@ void drawImageWithSD(unsigned long now) {
 
 
 void autoNegotiateBaudRate() {
+#ifdef USE_ADAFRUIT_BLUEFRUIT
+    Serial.println("Adafruit Bluefruit LE UART Friend Mode Enabled!");
+    Serial.println("Defaulting to 9600 baud...");
+    
+    // Adafruit Bluefruit uses 9600 baud by default in UART mode
+    current_ble_baud = 9600;
+    Serial5.begin(9600);
+    
+    // Clear the error message if it was shown (though it shouldn't be here)
+    indexedLayer.fillScreen(0);
+    indexedLayer.swapBuffers();
+    return;
+#endif
+
     Serial.println("Waiting for HM-10 to boot...");
     delay(1500); 
     
