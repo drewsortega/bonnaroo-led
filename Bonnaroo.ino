@@ -925,6 +925,11 @@ static TextCell text_grid[200];
 static bool text_loaded = false;
 static unsigned long last_text_draw = 0;
 
+static bool text_scroll_enabled = false;
+static uint8_t text_gap = 0;
+static uint8_t text_max_len = 0;
+static unsigned long text_scroll_tick = 0;
+
 void textInit(bool sd_available) {
     text_loaded = false;
     text_bg = COLOR_BLACK;
@@ -942,6 +947,17 @@ void textInit(bool sd_available) {
         text_rows = f.read();
         text_cols = f.read();
         
+        long expected_data_len = text_rows * text_cols * 4;
+        long remaining = f.available();
+        
+        if (remaining == expected_data_len + 2) {
+            text_scroll_enabled = f.read() == 1;
+            text_gap = f.read();
+        } else {
+            text_scroll_enabled = false;
+            text_gap = 0;
+        }
+        
         int total_cells = text_rows * text_cols;
         if (total_cells > 200) total_cells = 200; // safety
         
@@ -956,6 +972,21 @@ void textInit(bool sd_available) {
                 text_grid[i].color = COLOR_BLACK;
             }
         }
+        
+        int max_len = 0;
+        for (int r = 0; r < text_rows; r++) {
+            int row_len = 0;
+            for (int c = text_cols - 1; c >= 0; c--) {
+                if (text_grid[r * text_cols + c].c != ' ') {
+                    row_len = c + 1;
+                    break;
+                }
+            }
+            if (row_len > max_len) max_len = row_len;
+        }
+        text_max_len = max_len;
+        text_scroll_tick = 0;
+        
         text_loaded = true;
     }
     f.close();
@@ -968,88 +999,68 @@ void textInit(bool sd_available) {
 void textLoop(unsigned long now) {
     if (!text_loaded) return;
     
-    if (now - last_text_draw < 1000) return;
-    last_text_draw = now;
+    if (text_scroll_enabled) {
+        if (now - last_text_draw < 40) return; // scroll speed
+        last_text_draw = now;
+        text_scroll_tick++;
+    } else {
+        if (now - last_text_draw < 1000) return;
+        last_text_draw = now;
+    }
     
     backgroundLayer.fillScreen(text_bg);
     
     int charWidth, charHeight;
+    const GFXfont* gfxFont = nullptr;
+    fontChoices font;
     
     if (text_font_id < 6) {
-        fontChoices font;
-        if (text_font_id == 0) {
-            font = font3x5;
-            charWidth = 4;
-            charHeight = 6;
-        } else if (text_font_id == 1) {
-            font = font5x7;
-            charWidth = 6;
-            charHeight = 8;
-        } else if (text_font_id == 2) {
-            font = font6x10;
-            charWidth = 6;
-            charHeight = 10;
-        } else if (text_font_id == 3) {
-            font = gohufont11;
-            charWidth = 6;
-            charHeight = 11;
-        } else if (text_font_id == 4) {
-            font = gohufont11b;
-            charWidth = 6;
-            charHeight = 11;
-        } else {
-            font = font8x13;
-            charWidth = 9;
-            charHeight = 14;
-        }
-        
+        if (text_font_id == 0) { font = font3x5; charWidth = 4; charHeight = 6; }
+        else if (text_font_id == 1) { font = font5x7; charWidth = 6; charHeight = 8; }
+        else if (text_font_id == 2) { font = font6x10; charWidth = 6; charHeight = 10; }
+        else if (text_font_id == 3) { font = gohufont11; charWidth = 6; charHeight = 11; }
+        else if (text_font_id == 4) { font = gohufont11b; charWidth = 6; charHeight = 11; }
+        else { font = font8x13; charWidth = 9; charHeight = 14; }
         backgroundLayer.setFont(font);
-        
-        int idx = 0;
-        for (int r = 0; r < text_rows; r++) {
-            for (int c = 0; c < text_cols; c++) {
-                char ch[2] = { text_grid[idx].c, 0 };
-                backgroundLayer.drawString(c * charWidth, r * charHeight, text_grid[idx].color, ch);
-                idx++;
-                if (idx >= 200) break;
-            }
-            if (idx >= 200) break;
-        }
     } else {
-        const GFXfont* gfxFont;
-        int yOffset = 0;
-        if (text_font_id == 6) {
-            gfxFont = &FreeMono9pt7b;
-            charWidth = 11;
-            charHeight = 18;
-            yOffset = 13;
-        } else if (text_font_id == 7) {
-            gfxFont = &FreeMono12pt7b;
-            charWidth = 14;
-            charHeight = 24;
-            yOffset = 18;
-        } else if (text_font_id == 8) {
-            gfxFont = &FreeMono18pt7b;
-            charWidth = 21;
-            charHeight = 35;
-            yOffset = 26;
-        } else {
-            gfxFont = &FreeMono24pt7b;
-            charWidth = 28;
-            charHeight = 47;
-            yOffset = 35;
-        }
-        
+        if (text_font_id == 6) { gfxFont = &FreeMono9pt7b; charWidth = 11; charHeight = 18; }
+        else if (text_font_id == 7) { gfxFont = &FreeMono12pt7b; charWidth = 14; charHeight = 24; }
+        else if (text_font_id == 8) { gfxFont = &FreeMono18pt7b; charWidth = 21; charHeight = 35; }
+        else { gfxFont = &FreeMono24pt7b; charWidth = 28; charHeight = 47; }
         backgroundLayer.setFont(gfxFont);
+    }
+    
+    int wrap_width_chars = text_max_len + text_gap;
+    if (wrap_width_chars == 0) wrap_width_chars = 1;
+    int wrap_width_pixels = wrap_width_chars * charWidth;
+    
+    backgroundLayer.setTextWrap(false);
+    
+    int scroll_offset = text_scroll_enabled ? -(text_scroll_tick % wrap_width_pixels) : 0;
+    int reps = text_scroll_enabled ? (64 / wrap_width_pixels + 2) : 1;
+    
+    for (int rep = 0; rep < reps; rep++) {
+        int current_x_offset = scroll_offset + rep * wrap_width_pixels;
         
         int idx = 0;
         for (int r = 0; r < text_rows; r++) {
             for (int c = 0; c < text_cols; c++) {
-                char ch[2] = { text_grid[idx].c, 0 };
-                uint16_t c565 = backgroundLayer.color565(text_grid[idx].color.red, text_grid[idx].color.green, text_grid[idx].color.blue);
-                backgroundLayer.setTextColor(c565);
-                backgroundLayer.setCursor(c * charWidth, r * charHeight + yOffset);
-                backgroundLayer.print(ch);
+                if (!text_scroll_enabled || c < text_max_len) {
+                    int x = current_x_offset + c * charWidth;
+                    
+                    if (x > -charWidth && x < 64) {
+                        char ch[2] = { text_grid[idx].c, 0 };
+                        if (text_font_id < 6) {
+                            backgroundLayer.drawString(x, r * charHeight, text_grid[idx].color, ch);
+                        } else {
+                            uint16_t c565 = backgroundLayer.color565(text_grid[idx].color.red, text_grid[idx].color.green, text_grid[idx].color.blue);
+                            backgroundLayer.setTextColor(c565);
+                            int yOffset = (text_font_id == 6) ? 13 : (text_font_id == 7) ? 18 : (text_font_id == 8) ? 26 : 35;
+                            backgroundLayer.setCursor(x, r * charHeight + yOffset);
+                            backgroundLayer.print(ch);
+                        }
+                    }
+                }
                 idx++;
                 if (idx >= 200) break;
             }
