@@ -462,19 +462,31 @@ void HandleBLEInputs(unsigned long now) {
                 int percent = (ble_upload_received_size * 100) / ble_upload_expected_size;
                 if (percent != last_percent) {
                     last_percent = percent;
-                    char pbuf[16];
-                    sprintf(pbuf, "upld: %d", percent);
+                    if (percent % 5 == 0) {
+                        Serial.print("BLE Upload Progress: ");
+                        Serial.print(percent);
+                        Serial.println("%");
+                    }
                     
                     indexedLayer.fillScreen(0);
                     indexedLayer.setIndexedColor(1, COLOR_BLACK);
-                    indexedLayer.setIndexedColor(2, {255, 255, 255});
-                    for(int row=0; row<6; row++) {
+                    indexedLayer.setIndexedColor(2, {0, 255, 0}); // Green
+                    
+                    // Draw black background at the top
+                    for(int row=0; row<4; row++) {
                         for(int col=0; col<64; col++) {
                             indexedLayer.drawPixel(col, row, 1);
                         }
                     }
-                    indexedLayer.setFont(font3x5);
-                    indexedLayer.drawString(1, 1, 2, pbuf);
+                    
+                    // Draw green progress
+                    int fill_width = (percent * 64) / 100;
+                    for(int row=1; row<3; row++) {
+                        for(int col=0; col<fill_width; col++) {
+                            indexedLayer.drawPixel(col, row, 2);
+                        }
+                    }
+                    
                     indexedLayer.swapBuffers();
                 }
                 
