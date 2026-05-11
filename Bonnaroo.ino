@@ -467,27 +467,20 @@ void HandleBLEInputs(unsigned long now) {
                         Serial.print(percent);
                         Serial.println("%");
                     }
+                    char pbuf[32];
+                    sprintf(pbuf, "Up: %d%%", percent);
                     
+                    // Clear the indexed layer so it doesn't overlay
                     indexedLayer.fillScreen(0);
-                    indexedLayer.setIndexedColor(1, COLOR_BLACK);
-                    indexedLayer.setIndexedColor(2, {0, 255, 0}); // Green
-                    
-                    // Draw black background at the top
-                    for(int row=0; row<4; row++) {
-                        for(int col=0; col<64; col++) {
-                            indexedLayer.drawPixel(col, row, 1);
-                        }
-                    }
-                    
-                    // Draw green progress
-                    int fill_width = (percent * 64) / 100;
-                    for(int row=1; row<3; row++) {
-                        for(int col=0; col<fill_width; col++) {
-                            indexedLayer.drawPixel(col, row, 2);
-                        }
-                    }
-                    
                     indexedLayer.swapBuffers();
+                    
+                    // Draw directly to the main background layer
+                    backgroundLayer.fillScreen(COLOR_BLACK);
+                    backgroundLayer.setFont(font5x7);
+                    
+                    // Center the text vertically (approx row 28)
+                    backgroundLayer.drawString(5, 28, {255, 255, 255}, pbuf); 
+                    backgroundLayer.swapBuffers();
                 }
                 
                 if (ble_upload_received_size >= ble_upload_expected_size) {
