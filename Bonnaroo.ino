@@ -920,8 +920,8 @@ struct TextCell {
 static uint8_t text_font_id = 0;
 static rgb24 text_bg;
 static uint8_t text_rows = 0;
-static uint8_t text_cols = 0;
-static TextCell text_grid[200];
+static uint16_t text_cols = 0;
+static TextCell text_grid[20000];
 static bool text_loaded = false;
 static unsigned long last_text_draw = 0;
 
@@ -939,27 +939,21 @@ void textInit(bool sd_available) {
     File f = SD.open("/gifs/txt.bin", FILE_READ);
     if (!f) return;
     
-    if (f.available() >= 6) {
+    if (f.available() >= 9) {
         text_font_id = f.read();
         text_bg.red = f.read();
         text_bg.green = f.read();
         text_bg.blue = f.read();
         text_rows = f.read();
-        text_cols = f.read();
+        uint8_t cols_low = f.read();
+        uint8_t cols_high = f.read();
+        text_cols = (cols_high << 8) | cols_low;
         
-        long expected_data_len = text_rows * text_cols * 4;
-        long remaining = f.available();
-        
-        if (remaining == expected_data_len + 2) {
-            text_scroll_enabled = f.read() == 1;
-            text_gap = f.read();
-        } else {
-            text_scroll_enabled = false;
-            text_gap = 0;
-        }
+        text_scroll_enabled = f.read() == 1;
+        text_gap = f.read();
         
         int total_cells = text_rows * text_cols;
-        if (total_cells > 200) total_cells = 200; // safety
+        if (total_cells > 20000) total_cells = 20000; // safety
         
         for (int i = 0; i < total_cells; i++) {
             if (f.available() >= 4) {
@@ -1062,9 +1056,9 @@ void textLoop(unsigned long now) {
                     }
                 }
                 idx++;
-                if (idx >= 200) break;
+                if (idx >= 20000) break;
             }
-            if (idx >= 200) break;
+            if (idx >= 20000) break;
         }
     }
     
