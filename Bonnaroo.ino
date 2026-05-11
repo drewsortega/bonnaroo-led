@@ -1,3 +1,4 @@
+
 /*
  * This SmartMatrix Library example displays GIF animations loaded from a SD Card connected to the Teensy 3/4 and ESP32
  *
@@ -403,10 +404,118 @@ void HandleIRInputs(unsigned long now) {
     IrReceiver.resume(); // Receive the next value
 }
 
+static bool is_uploading_ble = false;
+static File ble_upload_file;
+long current_ble_baud = 9600; // Track the negotiated baud rate
+static size_t ble_upload_expected_size = 0;
+static size_t ble_upload_received_size = 0;
+static unsigned long ble_upload_last_rx_time = 0;
+static String ble_upload_filename = "";
+
 void HandleBLEInputs(unsigned long now) {
     static String ble_buffer = "";
     
+    static int last_percent = -1;
+    
+    // Auto-recover if a Bluetooth upload stalls (e.g. dropped connection)
+    if (is_uploading_ble && (now - ble_upload_last_rx_time > 2500)) {
+        Serial.println("BLE Upload TIMEOUT. Aborting...");
+        if (ble_upload_file) {
+            ble_upload_file.close();
+            
+            // Delete the corrupted partial file
+            String fullPath = "/gifs/" + ble_upload_filename;
+            if (SD.exists(fullPath.c_str())) {
+                SD.remove(fullPath.c_str());
+                Serial.println("Cleaned up corrupted file: " + fullPath);
+            }
+        }
+        is_uploading_ble = false;
+        ble_buffer = "";
+        
+        indexedLayer.fillScreen(0);
+        indexedLayer.swapBuffers();
+        last_percent = -1;
+        
+        writeDebugScreen("Upload Failed!", now);
+    }
+    
     while (Serial5.available() > 0) {
+        if (is_uploading_ble) {
+            ble_upload_last_rx_time = now;
+            // Read bytes directly to file
+            uint8_t buf[64];
+            int to_read = min((int)Serial5.available(), (int)(ble_upload_expected_size - ble_upload_received_size));
+            if (to_read > 64) to_read = 64;
+            
+            int bytes_read = Serial5.readBytes((char*)buf, to_read);
+            if (bytes_read > 0) {
+                if (ble_upload_file) {
+                    ble_upload_file.write(buf, bytes_read);
+                }
+                ble_upload_received_size += bytes_read;
+                
+                int percent = (ble_upload_received_size * 100) / ble_upload_expected_size;
+                if (percent != last_percent) {
+                    last_percent = percent;
+                    char pbuf[16];
+                    sprintf(pbuf, "upld: %d", percent);
+                    
+                    indexedLayer.fillScreen(0);
+                    indexedLayer.setIndexedColor(1, COLOR_BLACK);
+                    indexedLayer.setIndexedColor(2, {255, 255, 255});
+                    for(int row=0; row<6; row++) {
+                        for(int col=0; col<64; col++) {
+                            indexedLayer.drawPixel(col, row, 1);
+                        }
+                    }
+                    indexedLayer.setFont(font3x5);
+                    indexedLayer.drawString(1, 1, 2, pbuf);
+                    indexedLayer.swapBuffers();
+                }
+                
+                if (ble_upload_received_size >= ble_upload_expected_size) {
+                    // Done!
+                    if (ble_upload_file) {
+                        ble_upload_file.close();
+                    }
+                    is_uploading_ble = false;
+                    Serial.println("BLE Upload Complete!");
+                    
+                    indexedLayer.fillScreen(0);
+                    indexedLayer.swapBuffers();
+                    last_percent = -1;
+                    
+                    writeDebugScreen("Upload Complete!", now);
+                    
+                    // Re-index GIFs
+                    num_files = enumerateGIFFiles("/gifs", false);
+                    
+                    // Change mode to GIF viewer
+                    lbDeactivate();
+                    current_mode = MODE_GIF;
+                    
+                    // Find the index of the newly uploaded file
+                    for (int i = 0; i < num_files; i++) {
+                        char nameBuf[64];
+                        getGIFFilenameByIndex("/gifs", i, nameBuf);
+                        if (ble_upload_filename.equals(nameBuf)) {
+                            cur_image_idx = i;
+                            break;
+                        }
+                    }
+                    
+                    // Force refresh screen to start new GIF
+                    backgroundLayer.fillScreen(COLOR_BLACK);
+                    backgroundLayer.swapBuffers();
+                    backgroundLayer.fillScreen(COLOR_BLACK);
+                    backgroundLayer.swapBuffers();
+                    is_first_frame = true;
+                }
+            }
+            continue; // Skip the rest of the loop
+        }
+        
         char c = Serial5.read();
         
         Serial.print("BLE Packet Received: '");
@@ -417,8 +526,55 @@ void HandleBLEInputs(unsigned long now) {
         
         // Add to buffer for string matching
         ble_buffer += c;
-        if (ble_buffer.length() > 20) {
-            ble_buffer.remove(0, ble_buffer.length() - 20); // Keep last 20 chars
+        if (ble_buffer.length() > 64) {
+            ble_buffer.remove(0, ble_buffer.length() - 64); // Keep last 64 chars
+        }
+        
+        // Check for PING command to sync baud rate with phone
+        if (ble_buffer.endsWith("*PING*")) {
+            Serial.println("Phone app requested baud rate. Sending...");
+            Serial5.print("*BAUD:");
+            Serial5.print(current_ble_baud);
+            Serial5.print("*");
+            ble_buffer = "";
+            continue;
+        }
+        
+        // Check for upload command
+        int uIdx = ble_buffer.lastIndexOf("*U:");
+        if (uIdx >= 0) {
+            int endIdx = ble_buffer.indexOf('*', uIdx + 3);
+            if (endIdx > uIdx) {
+                // Found complete command!
+                String cmdStr = ble_buffer.substring(uIdx + 3, endIdx);
+                // Parse "filename.gif,12345"
+                int commaIdx = cmdStr.indexOf(',');
+                if (commaIdx > 0) {
+                    String filename = cmdStr.substring(0, commaIdx);
+                    int fileSize = cmdStr.substring(commaIdx + 1).toInt();
+                    
+                    if (fileSize > 0 && use_sd) {
+                        Serial.print("Starting BLE Upload: ");
+                        Serial.print(filename);
+                        Serial.print(" size: ");
+                        Serial.println(fileSize);
+                        
+                        String fullPath = String("/gifs/") + filename;
+                        if (SD.exists(fullPath.c_str())) {
+                            SD.remove(fullPath.c_str());
+                        }
+                        ble_upload_file = SD.open(fullPath.c_str(), FILE_WRITE);
+                        ble_upload_expected_size = fileSize;
+                        ble_upload_received_size = 0;
+                        ble_upload_last_rx_time = now;
+                        ble_upload_filename = filename;
+                        is_uploading_ble = true;
+                        ble_buffer = ""; // clear buffer
+                        continue; // skip normal processing for this byte, start receiving data
+                    }
+                }
+                ble_buffer = ""; // clear buffer if invalid format
+            }
         }
         
         // Check for common connect/disconnect strings (like HM-10)
@@ -434,6 +590,7 @@ void HandleBLEInputs(unsigned long now) {
             case '-': adjustBrightness(-6); break;
             case '+': adjustBrightness(6); break;
             case 'm':
+                lbDeactivate(); // Force close any active leaderboard
                 if (current_mode == MODE_GIF) {
                     current_mode = MODE_SNAKE;
                     snakeInit();
@@ -622,6 +779,102 @@ void drawImageWithSD(unsigned long now) {
 }
 
 
+void autoNegotiateBaudRate() {
+    Serial.println("Waiting for HM-10 to boot...");
+    delay(1500); 
+    
+    long possible_bauds[] = {115200, 9600, 460800, 57600, 38400, 19200, 230400, 4800};
+    
+    while (true) {
+        Serial.println("Checking HM-10 baud rate...");
+        
+        for (int i = 0; i < 8; i++) {
+            long test_baud = possible_bauds[i];
+            Serial.print("Probing "); Serial.print(test_baud); Serial.println(" baud...");
+            
+            Serial5.begin(test_baud);
+            Serial5.setTimeout(100);
+            while(Serial5.available()) Serial5.read(); // clear noise
+            delay(100);
+            
+            bool found = false;
+            bool is_clone = false;
+            
+            // Test standard AT
+            Serial5.print("AT");
+            delay(100);
+            if (Serial5.readString().indexOf("OK") >= 0) {
+                found = true;
+            } else {
+                // Test clone AT
+                Serial5.print("AT\r\n");
+                delay(100);
+                if (Serial5.readString().indexOf("OK") >= 0) {
+                    found = true;
+                    is_clone = true;
+                }
+            }
+            
+            if (found) {
+                Serial.print("Success! HM-10 detected at "); Serial.println(test_baud);
+                
+                // Clear the error message if it was shown
+                indexedLayer.fillScreen(0);
+                indexedLayer.swapBuffers();
+                
+                if (test_baud == 115200) {
+                    Serial.println("Already at target 115200 baud.");
+                    current_ble_baud = 115200;
+                    return;
+                }
+                
+                Serial.println("Upgrading to 115200 baud...");
+                if (is_clone) {
+                    Serial5.print("AT+BAUD8\r\n");
+                    delay(100); Serial.println(Serial5.readString());
+                    Serial5.print("AT+RESET\r\n");
+                } else {
+                    Serial5.print("AT+BAUD4");
+                    delay(100); Serial.println(Serial5.readString());
+                    Serial5.print("AT+RESET");
+                }
+                
+                Serial.println("Waiting 1.5s for reboot...");
+                delay(1500);
+                
+                Serial5.begin(115200);
+                while(Serial5.available()) Serial5.read();
+                Serial5.print(is_clone ? "AT\r\n" : "AT");
+                delay(100);
+                
+                if (Serial5.readString().indexOf("OK") >= 0) {
+                    Serial.println("Upgrade to 115200 SUCCESSFUL!");
+                    current_ble_baud = 115200;
+                    return;
+                } else {
+                    Serial.println("Upgrade FAILED! Reverting to 9600...");
+                    Serial5.begin(9600);
+                    current_ble_baud = 9600;
+                    return;
+                }
+            }
+        }
+        
+        Serial.println("Could not auto-negotiate HM-10. Is your phone connected? Retrying in 3 seconds...");
+        
+        // Display an error on the LED matrix so the user knows why it's stuck!
+        indexedLayer.fillScreen(0);
+        indexedLayer.setFont(font3x5);
+        indexedLayer.drawString(0, 15, 1, "BLE ERROR");
+        indexedLayer.drawString(0, 25, 1, "Phone connected?");
+        indexedLayer.drawString(0, 35, 1, "Please disconnect");
+        indexedLayer.drawString(0, 45, 1, "app to setup.");
+        indexedLayer.swapBuffers();
+        
+        delay(3000);
+    }
+}
+
 // Setup method runs once, when the sketch starts
 void setup() {
     matrix.setRotation(rotation270);
@@ -640,27 +893,24 @@ void setup() {
     // NOTE: new callback function required after we moved to using the external AnimatedGIF library to decode GIFs
     decoder.setFileSizeCallback(fileSizeCallback);
 
-    // USB communication
-    Serial.begin(115200);
-
-    // BluetoothLE communication
-    Serial5.begin(9600);
-
-    // give time for USB Serial to be ready
-    delay(1000);
-
     matrix.addLayer(&backgroundLayer); 
     matrix.addLayer(&indexedLayer); 
     matrix.addLayer(&scrollingLayer);
 
     matrix.setBrightness(brightness);
-
-
-
-    // for large panels, may want to set the refresh rate lower to leave more CPU time to decoding GIFs (needed if GIFs are playing back slowly)
-    //matrix.setRefreshRate(90);
     matrix.begin();
 
+    backgroundLayer.enableColorCorrection(true);
+    indexedLayer.enableColorCorrection(true);
+
+    // USB communication
+    Serial.begin(115200);
+
+    // BluetoothLE communication - auto upgrade to 115200
+    autoNegotiateBaudRate();
+
+    // give time for USB Serial to be ready
+    delay(1000);
 
     // Clear screen
     backgroundLayer.fillScreen(COLOR_BLACK);
@@ -742,8 +992,12 @@ void loop() {
         if (!use_sd) {
             drawImageNoSD(now);
         } else {
-            drawImageWithSD(now);
+            // Pause GIF decoding during upload to prevent file access collisions
+            if (!is_uploading_ble) {
+                drawImageWithSD(now);
+            }
         }
     }
     is_first_frame = false;
 }
+

@@ -142,6 +142,31 @@ void lbDrawNumber(int x, int y, int num, uint8_t r, uint8_t g, uint8_t b) {
     }
 }
 
+void lbDrawStringScaled(int x, int y, const char* str, uint8_t r, uint8_t g, uint8_t b, int scale) {
+    while(*str) {
+        if (*str != ' ') lbDrawCharScaled(x, y, *str, r, g, b, scale);
+        x += 3 * scale + 1;
+        str++;
+    }
+}
+
+void lbDrawNumberScaled(int x, int y, int num, uint8_t r, uint8_t g, uint8_t b, int scale) {
+    if (num == 0) {
+        lbDrawCharScaled(x, y, '0', r, g, b, scale);
+        return;
+    }
+    int digits[10];
+    int count = 0;
+    while(num > 0) {
+        digits[count++] = num % 10;
+        num /= 10;
+    }
+    for(int i=count-1; i>=0; i--) {
+        lbDrawCharScaled(x, y, '0' + digits[i], r, g, b, scale);
+        x += 3 * scale + 1;
+    }
+}
+
 void lbDrawBox(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b, bool outline, uint8_t or_r, uint8_t or_g, uint8_t or_b) {
     for (int dy = 0; dy < h; dy++) {
         for (int dx = 0; dx < w; dx++) {
@@ -186,24 +211,47 @@ static void loadLeaderboard() {
     
     File f = SD.open(lb_filename, FILE_READ);
     if (f) {
-        for(int i=0; i<5; i++) {
+        LeaderboardEntry temp_lb[20];
+        int count = 0;
+        
+        while(f.available() && count < 20) {
             char buf[32];
             int idx = 0;
             while(f.available()) {
                 char c = f.read();
-                if (c == '\n' || idx >= 31) { buf[idx] = 0; break; }
+                if (c == '\n' || idx >= 31) { break; }
                 if (c != '\r') buf[idx++] = c;
             }
-            if (idx == 0) break;
+            buf[idx] = 0;
+            
+            if (idx == 0) continue; // skip blank lines gracefully
+            
             char* space = strchr(buf, ' ');
             if (space) {
                 *space = 0;
-                strncpy(lb[i].name, buf, 4);
-                lb[i].name[4] = 0;
-                lb[i].score = atoi(space+1);
+                strncpy(temp_lb[count].name, buf, 4);
+                temp_lb[count].name[4] = 0;
+                temp_lb[count].score = atoi(space+1);
+                count++;
             }
         }
         f.close();
+        
+        // Sort descending
+        for (int i = 0; i < count - 1; i++) {
+            for (int j = i + 1; j < count; j++) {
+                if (temp_lb[j].score > temp_lb[i].score) {
+                    LeaderboardEntry t = temp_lb[i];
+                    temp_lb[i] = temp_lb[j];
+                    temp_lb[j] = t;
+                }
+            }
+        }
+        
+        // Take top 5
+        for(int i=0; i<5 && i<count; i++) {
+            lb[i] = temp_lb[i];
+        }
     }
 }
 
@@ -308,6 +356,10 @@ bool lbIsActive() {
     return lb_state != 0;
 }
 
+void lbDeactivate() {
+    lb_state = 0;
+}
+
 void lbLoop(unsigned long now) {
     if (lb_state == 0) return;
     
@@ -342,11 +394,11 @@ void lbLoop(unsigned long now) {
             lb_state_timer = now;
         }
         screenClearCallback();
-        lbDrawString(12, 2, "TOP SCORES", 255, 255, 0);
+        lbDrawString(12, 1, "TOP SCORES", 255, 255, 0);
         for(int i=0; i<5; i++) {
-            int ry = 14 + i * 8;
-            lbDrawString(8, ry, lb[i].name, 255, 255, 255);
-            lbDrawNumber(28, ry, lb[i].score, 0, 255, 255);
+            int ry = 8 + i * 11;
+            lbDrawStringScaled(2, ry, lb[i].name, 255, 255, 255, 2);
+            lbDrawNumberScaled(34, ry, lb[i].score, 0, 255, 255, 2);
         }
         if (!lb_was_in_top_5) {
             for(int i=4; i<60; i+=2) {

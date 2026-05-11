@@ -124,6 +124,26 @@ public:
         return (pos == std::string::npos) ? -1 : (int)pos;
     }
     
+    int indexOf(char c, unsigned int index = 0) const {
+        size_t pos = _str.find(c, index);
+        return (pos == std::string::npos) ? -1 : (int)pos;
+    }
+
+    String substring(unsigned int from, unsigned int to = (unsigned int)-1) const {
+        if (from >= _str.length()) return String("");
+        if (to == (unsigned int)-1 || to > _str.length()) to = _str.length();
+        if (from >= to) return String("");
+        return String(_str.substr(from, to - from).c_str());
+    }
+
+    int toInt() const {
+        try {
+            return std::stoi(_str);
+        } catch (...) {
+            return 0;
+        }
+    }
+    
     void remove(unsigned int index, unsigned int count = 1) {
         if (index < _str.length()) {
             _str.erase(index, count);
@@ -146,6 +166,18 @@ public:
     
     bool operator==(const String& rhs) const {
         return _str == rhs._str;
+    }
+    
+    bool equals(const char* s) const {
+        return _str == s;
+    }
+    
+    String operator+(const String& rhs) const {
+        return String((_str + rhs._str).c_str());
+    }
+    
+    String operator+(const char* rhs) const {
+        return String((_str + (rhs ? rhs : "")).c_str());
     }
 };
 
@@ -186,6 +218,13 @@ public:
         char c = _buf[_tail];
         _tail = (_tail + 1) % BUF_SIZE;
         return c;
+    }
+    int readBytes(char* buffer, int length) {
+        int count = 0;
+        while (count < length && available() > 0) {
+            buffer[count++] = read();
+        }
+        return count;
     }
     void inject(char c) {
         int next = (_head + 1) % BUF_SIZE;
