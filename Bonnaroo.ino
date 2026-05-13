@@ -41,7 +41,8 @@
 
 // Flow control pins for Adafruit Bluefruit LE UART Friend
 #define BLUEFRUIT_CTS_PIN 22 // Teensy pin pulling Bluefruit CTS to GND
-#define BLUEFRUIT_RTS_PIN 19 // Teensy pin reading Bluefruit RTS (for later use)
+#define BLUEFRUIT_RTS_PIN 19 // Teensy pin reading Bluefruit RTS
+#define BLUEFRUIT_MOD_PIN -1 // Disabled: Settings already permanently saved to Bluefruit flash
 
 #ifdef SIMULATOR_MODE
   #include <GifDecoder.h>
@@ -625,17 +626,32 @@ void HandleBLEInputs(unsigned long now) {
             // Allow the BLE module a moment to transmit the header before blasting the payload
             delay(100); 
             
-            // Transmit the pre-computed payload in safe BLE-sized chunks (MTU = 20)
-            int bytes_sent = 0;
+            // Transmit the pre-computed payload using Software-Assisted Hardware Flow Control
+            int rts_blocks = 0;
+            unsigned long total_rts_wait_time = 0;
+
             for (int i = 0; i < total_size; i++) {
-                Serial5.print(anim_list[i]);
-                bytes_sent++;
-                
-                if (bytes_sent >= 20) {
-                    delay(20); // Sync exactly with standard BLE MTU packet intervals
-                    bytes_sent = 0;
+                // Check if Bluefruit's 256-byte buffer is full
+                if (digitalRead(BLUEFRUIT_RTS_PIN) == HIGH) {
+                    rts_blocks++;
+                    unsigned long wait_start = millis();
+                    
+                    // Pause until Bluefruit transmits packets and clears space
+                    while (digitalRead(BLUEFRUIT_RTS_PIN) == HIGH) {
+                        delay(1);
+                    }
+                    
+                    total_rts_wait_time += (millis() - wait_start);
                 }
+                
+                Serial5.print(anim_list[i]);
             }
+            
+            Serial.print("BLE Transmission complete. RTS blocked ");
+            Serial.print(rts_blocks);
+            Serial.print(" times, waiting a total of ");
+            Serial.print(total_rts_wait_time);
+            Serial.println(" ms.");
             
             // Flush any garbage or queued requests that accumulated during the blocking send
             while (Serial5.available()) Serial5.read();
@@ -1224,9 +1240,46 @@ void setup() {
     // BluetoothLE communication - auto upgrade to 115200
     pinMode(BLUEFRUIT_CTS_PIN, OUTPUT);
     digitalWrite(BLUEFRUIT_CTS_PIN, LOW); // Hardwire CTS to GND via pin 22
-    pinMode(BLUEFRUIT_RTS_PIN, INPUT_PULLDOWN); // Read RTS from pin 19, default LOW if unplugged
+    pinMode(BLUEFRUIT_RTS_PIN, INPUT_PULLDOWN); // Use PULLDOWN (Adafruit uses push-pull 3.3V, so this safely defaults to 'ready' if unplugged)
 
     autoNegotiateBaudRate();
+    
+    // Automatically configure Bluefruit Flow Control if MOD pin is connected
+    if (BLUEFRUIT_MOD_PIN >= 0) {
+        Serial.println("Configuring final Bluefruit LE settings...");
+        pinMode(BLUEFRUIT_MOD_PIN, OUTPUT);
+        digitalWrite(BLUEFRUIT_MOD_PIN, HIGH); // Pull MOD high to enter CMD mode
+        delay(500); // Wait for mode switch
+        
+        while(Serial5.available()) Serial5.read(); // Clear buffer
+        
+        Serial.println("1/4: Ensuring Hardware Flow Control is ON...");
+        Serial5.println("AT+UARTFLOW=on");
+        delay(250);
+        while(Serial5.available()) Serial.write(Serial5.read());
+        
+        Serial.println("2/4: Setting Antenna Power to +4 dBm...");
+        Serial5.println("AT+BLEPOWERLEVEL=4");
+        delay(250);
+        while(Serial5.available()) Serial.write(Serial5.read());
+        
+        Serial.println("3/4: Renaming device to 'shhhhhhh...'...");
+        Serial5.println("AT+GAPDEVNAME=shhhhhhh...");
+        delay(250);
+        while(Serial5.available()) Serial.write(Serial5.read());
+        
+        Serial.println("4/4: Disabling +++ mode switch vulnerability...");
+        Serial5.println("AT+MODESWITCHEN=off");
+        delay(250);
+        while(Serial5.available()) Serial.write(Serial5.read());
+
+        Serial.println("Software rebooting Bluefruit to apply name change...");
+        Serial5.println("ATZ");
+        delay(1500); // Takes a second to reboot
+        
+        digitalWrite(BLUEFRUIT_MOD_PIN, LOW); // Pull MOD low to return to DATA mode
+        delay(500); // Wait for mode switch
+    }
 
     // give time for USB Serial to be ready
     delay(1000);
