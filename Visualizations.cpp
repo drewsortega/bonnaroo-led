@@ -7,7 +7,7 @@ extern void updateScreenCallback(void);
 extern void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue);
 
 static int current_vis = 0;
-static const int NUM_VIS = 9;
+static const int NUM_VIS = 7;
 
 // Helper: HSV to RGB
 static void HSVtoRGB(float h, float s, float v, uint8_t* r, uint8_t* g, uint8_t* b) {
@@ -492,334 +492,6 @@ static void drawCubicMatrix(unsigned long now) {
 }
 
 // -----------------------------------------------------------
-// VISUALIZATION 7: ALIEN CORAL REEF (Gyroid Caverns)
-// -----------------------------------------------------------
-
-static float mapGyroidCavern(float p_x, float p_y, float p_z, float t) {
-    float scale = 1.5f;
-    float gx = p_x * scale;
-    float gy = p_y * scale;
-    float gz = p_z * scale;
-    
-    // Add domain warping so the cavern walls melt and breathe
-    gx += 0.5f * sinf(gy * 0.5f + t);
-    gy += 0.5f * sinf(gz * 0.5f - t);
-    gz += 0.5f * sinf(gx * 0.5f + t);
-    
-    // The mathematical Gyroid SDF formula
-    float g = sinf(gx)*cosf(gy) + sinf(gy)*cosf(gz) + sinf(gz)*cosf(gx);
-    
-    // Greatly reduced thickness to make the coral highly porous
-    float thickness = 0.05f + 0.05f * sinf(t * 1.5f);
-    float d = (fabsf(g) - thickness) / scale;
-    d *= 0.6f; // Safety multiplier
-    
-    // We carve a massive, breathing cylindrical cavern straight down the Z axis
-    float tunnel_radius = 1.8f + 0.4f * sinf(p_z * 0.5f + t);
-    float tunnel = sqrtf(p_x*p_x + p_y*p_y) - tunnel_radius;
-    
-    return fmaxf(d, -tunnel);
-}
-
-// Calculate the 3D normal vector at the surface for realistic lighting!
-static void getGyroidNormal(float p_x, float p_y, float p_z, float t, float* nx, float* ny, float* nz) {
-    float eps = 0.02f;
-    float d = mapGyroidCavern(p_x, p_y, p_z, t);
-    *nx = mapGyroidCavern(p_x + eps, p_y, p_z, t) - d;
-    *ny = mapGyroidCavern(p_x, p_y + eps, p_z, t) - d;
-    *nz = mapGyroidCavern(p_x, p_y, p_z + eps, t) - d;
-    
-    float len = sqrtf((*nx)*(*nx) + (*ny)*(*ny) + (*nz)*(*nz));
-    if (len > 0.0001f) {
-        *nx /= len; *ny /= len; *nz /= len;
-    }
-}
-
-static void drawGyroidCavern(unsigned long now) {
-    float t = now / 1000.0f;
-    
-    // Camera setup: endlessly flying forward
-    float ro_x = 0.0f;
-    float ro_y = 0.0f;
-    float ro_z = t * 4.0f; 
-    
-    // Slight smooth camera path weaving (tightened to prevent clipping)
-    ro_x += 0.3f * sinf(t * 0.4f);
-    ro_y += 0.3f * cosf(t * 0.3f);
-    
-    int max_steps = 25; // Balanced for Gyroid
-    float max_dist = 14.0f; // Increased fog to save steps
-    
-    // Precalculate camera roll/pitch for dynamic flight
-    float cam_s = sinf(t * 0.3f);
-    float cam_c = cosf(t * 0.3f);
-    float pitch_s = sinf(t * 0.2f);
-    float pitch_c = cosf(t * 0.2f);
-    
-    // Pure 1x1 Optimization
-    for (int py = 0; py < 64; py++) {
-        for (int px = 0; px < 64; px++) {
-            // Ray direction
-            float rd_x = (px - 31.5f) / 32.0f;
-            float rd_y = (py - 31.5f) / 32.0f;
-            float rd_z = 1.0f;
-            
-            float len = sqrtf(rd_x*rd_x + rd_y*rd_y + rd_z*rd_z);
-            rd_x /= len; rd_y /= len; rd_z /= len;
-            
-            // Camera Roll
-            float trx = rd_x * cam_c - rd_y * cam_s;
-            float try_ = rd_x * cam_s + rd_y * cam_c;
-            rd_x = trx; rd_y = try_;
-            
-            // Camera Pitch
-            float trz = rd_z * pitch_c - rd_y * pitch_s;
-            try_ = rd_z * pitch_s + rd_y * pitch_c;
-            rd_z = trz; rd_y = try_;
-            
-            float dist = 0.0f;
-            int steps = 0;
-            float p_x = 0, p_y = 0, p_z = 0;
-            
-            // 3D Raymarching Engine
-            for (steps = 0; steps < max_steps; steps++) {
-                p_x = ro_x + rd_x * dist;
-                p_y = ro_y + rd_y * dist;
-                p_z = ro_z + rd_z * dist;
-                
-                float d = mapGyroidCavern(p_x, p_y, p_z, t);
-                
-                if (d < 0.02f) break; // Hit the wall
-                dist += d;
-                if (dist > max_dist) break; // Lost in the deep cave
-            }
-            
-            if (dist < max_dist) {
-                // Get the true 3D surface normal for lighting
-                float nx, ny, nz;
-                getGyroidNormal(p_x, p_y, p_z, t, &nx, &ny, &nz);
-                
-                // Cinematic Dual-Directional Lighting!
-                // Light 1: Cyan (orbiting slowly)
-                float l1_x = cosf(t * 0.8f);
-                float l1_y = sinf(t * 0.8f);
-                float l1_z = -0.5f;
-                // Normalize light 1
-                float l1_len = sqrtf(l1_x*l1_x + l1_y*l1_y + l1_z*l1_z);
-                l1_x /= l1_len; l1_y /= l1_len; l1_z /= l1_len;
-                
-                float diff1 = nx*l1_x + ny*l1_y + nz*l1_z;
-                if (diff1 < 0.0f) diff1 = 0.0f;
-                
-                // Light 2: Magenta (opposite side, orbiting)
-                float l2_x = -l1_x, l2_y = -l1_y, l2_z = 0.5f;
-                float diff2 = nx*l2_x + ny*l2_y + nz*l2_z;
-                if (diff2 < 0.0f) diff2 = 0.0f;
-                
-                // Base ambient color (Deep Void Purple)
-                float r_f = 0.05f;
-                float g_f = 0.0f;
-                float b_f = 0.12f;
-                
-                // Add Cyan light reflection
-                r_f += diff1 * 0.0f;
-                g_f += diff1 * 0.8f;
-                b_f += diff1 * 1.0f;
-                
-                // Add Magenta light reflection
-                r_f += diff2 * 1.0f;
-                g_f += diff2 * 0.0f;
-                b_f += diff2 * 0.8f;
-                
-                // Add Toxic Bioluminescent Crevice Glow!
-                // If it took many steps, the ray got trapped in a deep crevice
-                float glow = ((float)steps / max_steps);
-                glow = glow * glow * 1.5f; // Exponential pop
-                
-                r_f += glow * 0.8f; // Toxic Yellow-Green
-                g_f += glow * 1.0f;
-                b_f += glow * 0.0f;
-                
-                // Apply Distance Fog
-                float fog = 1.0f - (dist / max_dist);
-                r_f *= fog; g_f *= fog; b_f *= fog;
-                
-                // Clamp to prevent overflow
-                if (r_f > 1.0f) r_f = 1.0f;
-                if (g_f > 1.0f) g_f = 1.0f;
-                if (b_f > 1.0f) b_f = 1.0f;
-                
-                uint8_t r_col = (uint8_t)(r_f * 255.0f);
-                uint8_t g_col = (uint8_t)(g_f * 255.0f);
-                uint8_t b_col = (uint8_t)(b_f * 255.0f);
-                drawPixelCallback(px, py, r_col, g_col, b_col);
-            } else {
-                drawPixelCallback(px, py, 0, 0, 0); // Background void
-            }
-        }
-    }
-}
-
-// -----------------------------------------------------------
-// VISUALIZATION 8: NEON SERPENT TANGLE (Writhing Torus Knots)
-// -----------------------------------------------------------
-
-// Smooth Maximum function for organically blending SDFs together
-static float smax(float a, float b, float k) {
-    float h = fmaxf(k - fabsf(a - b), 0.0f) / k;
-    return fmaxf(a, b) + h * h * k * 0.25f;
-}
-
-static float mapSerpentTangle(float p_x, float p_y, float p_z, float t) {
-    // Smoother, gentler domain warping for thick snake bodies (less noise!)
-    float warp = 0.4f;
-    float x = p_x + warp * sinf(p_y * 0.8f + t * 1.5f);
-    float y = p_y + warp * sinf(p_z * 0.8f - t * 1.2f);
-    float z = p_z + warp * sinf(p_x * 0.8f + t * 1.8f);
-    
-    // Tighter grid to pack the snakes densely
-    float c = 2.0f; 
-    float lx = fmodf(x + 30000.0f, c) - c*0.5f;
-    float ly = fmodf(y + 30000.0f, c) - c*0.5f;
-    float lz = fmodf(z + 30000.0f, c) - c*0.5f;
-    
-    // Much thicker pipes!
-    float r = 0.35f + 0.05f * sinf(t * 3.0f);
-    
-    // Weave offset
-    float o = 0.5f;
-    
-    float dy_x = ly - o; float dz_x = lz + o;
-    float d1 = sqrtf(dy_x*dy_x + dz_x*dz_x) - r;
-    
-    float dx_y = lx + o; float dz_y = lz - o;
-    float d2 = sqrtf(dx_y*dx_y + dz_y*dz_y) - r;
-    
-    float dx_z = lx - o; float dy_z = ly + o;
-    float d3 = sqrtf(dx_z*dx_z + dy_z*dy_z) - r;
-    
-    // Combine the pipes into the woven knot
-    float d = fminf(d1, fminf(d2, d3));
-    
-    // Carve a smooth central flight path tunnel
-    float tunnel_radius = 1.1f + 0.2f * sinf(p_z * 0.8f + t);
-    float tunnel = sqrtf(p_x*p_x + p_y*p_y) - tunnel_radius;
-    
-    // Less aggressive smooth melt
-    d = smax(d, -tunnel, 0.4f);
-    
-    // Raymarching safety multiplier (increased because warp is smoother)
-    return d * 0.5f;
-}
-
-static void getSerpentNormal(float p_x, float p_y, float p_z, float t, float* nx, float* ny, float* nz) {
-    float eps = 0.02f;
-    float d = mapSerpentTangle(p_x, p_y, p_z, t);
-    *nx = mapSerpentTangle(p_x + eps, p_y, p_z, t) - d;
-    *ny = mapSerpentTangle(p_x, p_y + eps, p_z, t) - d;
-    *nz = mapSerpentTangle(p_x, p_y, p_z + eps, t) - d;
-    
-    float len = sqrtf((*nx)*(*nx) + (*ny)*(*ny) + (*nz)*(*nz));
-    if (len > 0.0001f) {
-        *nx /= len; *ny /= len; *nz /= len;
-    }
-}
-
-static void drawSerpentTangle(unsigned long now) {
-    float t = now / 1000.0f;
-    
-    float ro_x = 0.0f;
-    float ro_y = 0.0f;
-    float ro_z = t * 3.5f; // Fast flight speed
-    
-    // Minimal wobble so we stay in the safe central tunnel
-    ro_x += 0.2f * sinf(t * 0.4f);
-    ro_y += 0.2f * cosf(t * 0.3f);
-    
-    int max_steps = 25; // Balanced for Serpent
-    float max_dist = 11.0f; // Limit distance to keep FPS high
-    
-    float cam_s = sinf(t * 0.3f);
-    float cam_c = cosf(t * 0.3f);
-    float pitch_s = sinf(t * 0.2f);
-    float pitch_c = cosf(t * 0.2f);
-    
-    // Pure 1x1 Optimization
-    for (int py = 0; py < 64; py++) {
-        for (int px = 0; px < 64; px++) {
-            float rd_x = (px - 31.5f) / 32.0f;
-            float rd_y = (py - 31.5f) / 32.0f;
-            float rd_z = 1.0f;
-            
-            float len = sqrtf(rd_x*rd_x + rd_y*rd_y + rd_z*rd_z);
-            rd_x /= len; rd_y /= len; rd_z /= len;
-            
-            float trx = rd_x * cam_c - rd_y * cam_s;
-            float try_ = rd_x * cam_s + rd_y * cam_c;
-            rd_x = trx; rd_y = try_;
-            
-            float trz = rd_z * pitch_c - rd_y * pitch_s;
-            try_ = rd_z * pitch_s + rd_y * pitch_c;
-            rd_z = trz; rd_y = try_;
-            
-            float dist = 0.0f;
-            int steps = 0;
-            float p_x = 0, p_y = 0, p_z = 0;
-            
-            // 3D Raymarching Engine
-            for (steps = 0; steps < max_steps; steps++) {
-                p_x = ro_x + rd_x * dist;
-                p_y = ro_y + rd_y * dist;
-                p_z = ro_z + rd_z * dist;
-                
-                float d = mapSerpentTangle(p_x, p_y, p_z, t);
-                
-                if (d < 0.02f) break;
-                dist += d;
-                if (dist > max_dist) break;
-            }
-            
-            if (dist < max_dist) {
-                float nx, ny, nz;
-                getSerpentNormal(p_x, p_y, p_z, t, &nx, &ny, &nz);
-                
-                // FRESNEL EDGE GLOW: Makes the snakes look like glowing neon glass!
-                // The dot product of the view ray and the normal is lowest at the extreme edges.
-                float dot_val = rd_x*nx + rd_y*ny + rd_z*nz;
-                float fresnel = 1.0f - fabsf(dot_val);
-                fresnel = fresnel * fresnel; // Softer fresnel, doesn't plunge to pure black
-                
-                // Color hue
-                float hue = fmodf(p_z * 10.0f + t * 60.0f, 360.0f);
-                if (hue < 0) hue += 360.0f;
-                
-                // Crevice shading (Ambient Occlusion)
-                float ao = 1.0f - ((float)steps / max_steps);
-                
-                // Color mapping: Brighter ambient base, intense fresnel highlight
-                float val = 0.6f * ao + fresnel * 1.5f;
-                
-                // Desaturate slightly so it's not brutally intense
-                float sat = 0.5f + 0.5f * fresnel;
-                
-                // Distance fog
-                float fog = 1.0f - (dist / max_dist);
-                val *= fog;
-                
-                if (val > 1.0f) val = 1.0f;
-                if (sat > 1.0f) sat = 1.0f;
-                
-                uint8_t r_col, g_col, b_col;
-                HSVtoRGB(hue, 1.0f, val, &r_col, &g_col, &b_col);
-                drawPixelCallback(px, py, r_col, g_col, b_col);
-            } else {
-                drawPixelCallback(px, py, 0, 0, 0); // Background void
-            }
-        }
-    }
-}
-
-// -----------------------------------------------------------
 // VISUALIZATION 9: DVD SCREENSAVER (Corner Hit!)
 // -----------------------------------------------------------
 
@@ -975,12 +647,31 @@ void visLoop(unsigned long now) {
     } else if (current_vis == 5) {
         drawCubicMatrix(now);
     } else if (current_vis == 6) {
-        // drawGyroidCavern(now); // Disabled due to lag
-    } else if (current_vis == 7) {
-        // drawSerpentTangle(now); // Disabled due to lag
-    } else if (current_vis == 8) {
         drawDVD(now);
     }
     
     updateScreenCallback();
+}
+
+void visDrawBackground(int bg_idx, unsigned long now) {
+    if (bg_idx == 3) {
+        drawPlasma(now);
+    } else if (bg_idx == 4) {
+        drawCubicMatrix(now); // Starfield doesn't exist, use Cubic Matrix
+    }
+}
+
+void visDrawAnimation(int anim_idx, unsigned long now) {
+    if (anim_idx < 0 || anim_idx >= NUM_VIS) return;
+    
+    switch (anim_idx) {
+        case 0: drawPlasma(now); break;
+        case 1: drawConcentric(now); break;
+        case 2: drawJulia(now); break;
+        case 3: drawGameOfLife(now); break;
+        case 4: drawMandelbrot(now); break;
+        case 5: drawCubicMatrix(now); break;
+        case 6: drawDVD(now); break;
+        default: break;
+    }
 }

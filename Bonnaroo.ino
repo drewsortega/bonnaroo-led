@@ -87,9 +87,17 @@ enum AppMode {
     MODE_FROGGER,
     MODE_TETRIS,
     MODE_VISUALIZATIONS,
-    MODE_TEXT
+    MODE_TEXT,
+    MODE_LAYER
 };
 static AppMode current_mode = MODE_GIF;
+
+// --- Layer Mixer State ---
+static int layer_bg_idx = -1;
+static int layer_anim_idx = -1;
+static int layer_fg_idx = -1;
+static int layer_txt_idx = -1;
+static rgb24 layer_gif_buffer[64][64];
 
 // GIF Bitmaps.
 #include "bitmaps/bm_ariel_dance.c"
@@ -163,15 +171,34 @@ uint8_t *pGIFBuf;
 
 
 void screenClearCallback(void) {
-  backgroundLayer.fillScreen({0,0,0});
+  if (current_mode == MODE_LAYER) {
+      for (int y = 0; y < 64; y++) {
+          for (int x = 0; x < 64; x++) {
+              rgb24 tmp = {1, 1, 1};
+              layer_gif_buffer[y][x] = tmp; // Magic transparent color
+          }
+      }
+  } else {
+      backgroundLayer.fillScreen({0,0,0});
+  }
 }
 
 void updateScreenCallback(void) {
-  backgroundLayer.swapBuffers();
+  if (current_mode != MODE_LAYER) {
+      backgroundLayer.swapBuffers();
+  }
 }
 
 void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue) {
-    backgroundLayer.drawPixel(x, y, {red, green, blue});
+    if (current_mode == MODE_LAYER) {
+        if (red == 1 && green == 1 && blue == 1) red = 2; // Avoid transparent color collision
+        if (x >= 0 && x < 64 && y >= 0 && y < 64) {
+            rgb24 tmp = {red, green, blue};
+            layer_gif_buffer[y][x] = tmp;
+        }
+    } else {
+        backgroundLayer.drawPixel(x, y, {red, green, blue});
+    }
 }
 
 int wrap_enumerateGIFFiles(const char *directoryName, bool displayFilenames) {
@@ -570,6 +597,7 @@ void HandleBLEInputs(unsigned long now) {
 
         // Check for GETANIM command
         int getAnimIdx = ble_buffer.lastIndexOf("<GETANIM>");
+        
         if (getAnimIdx >= 0) {
             ble_buffer = ""; // Clear buffer immediately
             
@@ -585,10 +613,9 @@ void HandleBLEInputs(unsigned long now) {
             String anim_list = "";
             const char* const VISUALIZATION_NAMES[] = {
                 "Vis: Plasma", "Vis: Concentric", "Vis: Julia", "Vis: Game of Life",
-                "Vis: Fractal Tunnel", "Vis: Cubic Matrix", "Vis: Gyroid Caverns",
-                "Vis: Serpent Tangle", "Vis: DVD Logo"
+                "Vis: Fractal Tunnel", "Vis: Cubic Matrix", "Vis: DVD Logo"
             };
-            const int NUM_VISUALIZATIONS = 9;
+            const int NUM_VISUALIZATIONS = 7;
             
             for (int i = 0; i < NUM_VISUALIZATIONS; i++) {
                 anim_list += String(VISUALIZATION_NAMES[i]);
@@ -598,6 +625,9 @@ void HandleBLEInputs(unsigned long now) {
             }
             
             if (use_sd) {
+                // Close active GIF handle to avoid SD card SPI collisions during enumeration
+                if (my_sd_file) my_sd_file.close();
+                is_first_frame = true; // Force decoder to restart cleanly
                 invalidateGIFCache(); // Force a fresh read and sort for the app
                 int total_gifs = enumerateGIFFiles("/gifs", false);
                 for (int i = 0; i < total_gifs; i++) {
@@ -676,7 +706,7 @@ void HandleBLEInputs(unsigned long now) {
                     backgroundLayer.swapBuffers();
                     backgroundLayer.fillScreen(COLOR_BLACK);
                     backgroundLayer.swapBuffers();
-                } else if (target_idx >= 0 && target_idx < 9) {
+                } else if (target_idx >= 0 && target_idx < 7) {
                     lbDeactivate();
                     current_mode = MODE_VISUALIZATIONS;
                     visSetCurrent(target_idx);
@@ -685,7 +715,7 @@ void HandleBLEInputs(unsigned long now) {
                     backgroundLayer.fillScreen(COLOR_BLACK);
                     backgroundLayer.swapBuffers();
                 } else if (use_sd) {
-                    int gif_idx = target_idx - 9;
+                    int gif_idx = target_idx - 7;
                     int total_gifs = enumerateGIFFiles("/gifs", false);
                     if (gif_idx >= 0 && gif_idx < total_gifs) {
                         lbDeactivate();
@@ -697,6 +727,65 @@ void HandleBLEInputs(unsigned long now) {
                         backgroundLayer.fillScreen(COLOR_BLACK);
                         backgroundLayer.swapBuffers();
                     }
+                }
+                ble_buffer = "";
+                continue;
+            }
+        }
+        
+        // Check for LAYER command
+        int layerIdx = ble_buffer.lastIndexOf("<LAYER:");
+        if (layerIdx >= 0) {
+            int endIdx = ble_buffer.indexOf('>', layerIdx + 7);
+            if (endIdx > layerIdx) {
+                String cmdStr = ble_buffer.substring(layerIdx + 7, endIdx);
+                // Expected: bg,anim,fg,txt
+                int comma1 = cmdStr.indexOf(',');
+                int comma2 = cmdStr.indexOf(',', comma1 + 1);
+                int comma3 = cmdStr.indexOf(',', comma2 + 1);
+                
+                if (comma1 > 0 && comma2 > 0 && comma3 > 0) {
+                    int bg = cmdStr.substring(0, comma1).toInt();
+                    int anim = cmdStr.substring(comma1 + 1, comma2).toInt();
+                    int fg = cmdStr.substring(comma2 + 1, comma3).toInt();
+                    int txt = cmdStr.substring(comma3 + 1).toInt();
+                    
+                    Serial.print("Phone requested LAYER mix: BG=");
+                    Serial.print(bg); Serial.print(" ANIM=");
+                    Serial.print(anim); Serial.print(" FG=");
+                    Serial.print(fg); Serial.print(" TXT=");
+                    Serial.println(txt);
+                    
+                    lbDeactivate();
+                    current_mode = MODE_LAYER;
+                    
+                    layer_bg_idx = bg;
+                    layer_anim_idx = anim;
+                    layer_fg_idx = fg;
+                    layer_txt_idx = txt;
+                    
+                    // Clear the GIF buffer to our magic transparent color
+                    for (int y = 0; y < 64; y++) {
+                        for (int x = 0; x < 64; x++) {
+                            rgb24 tmp = {1, 1, 1};
+                            layer_gif_buffer[y][x] = tmp;
+                        }
+                    }
+                    
+                    // Initialize animation layer
+                    if (layer_anim_idx >= 0) {
+                        if (layer_anim_idx < 7) {
+                            visSetCurrent(layer_anim_idx);
+                        } else {
+                            cur_image_idx = layer_anim_idx - 7;
+                            is_first_frame = true;
+                        }
+                    }
+                    
+                    backgroundLayer.fillScreen(COLOR_BLACK);
+                    backgroundLayer.swapBuffers();
+                    backgroundLayer.fillScreen(COLOR_BLACK);
+                    backgroundLayer.swapBuffers();
                 }
                 ble_buffer = "";
                 continue;
@@ -887,6 +976,13 @@ void drawImageNoSD(unsigned long now) {
 }
 
 void drawImageWithSD(unsigned long now) {
+    static unsigned long error_timeout = 0;
+    if (error_timeout > 0) {
+        if (now < error_timeout) return; // Wait until timeout finishes
+        error_timeout = 0; // Timeout done, attempt to recover!
+        is_first_frame = true;
+    }
+
     // For GIFs
     // these variables keep track of when we're done displaying the last frame and are ready for a new frame
     static uint32_t lastFrameDisplayTime = 0;
@@ -899,6 +995,9 @@ void drawImageWithSD(unsigned long now) {
         if(!openGifFilenameByIndex("/gifs/", cur_image_idx, name_buf)) {
             writeDebugScreen("Fail", now);
             Serial.println("Fail");
+            // If we couldn't even open the file, wait 1s before retrying
+            error_timeout = now + 1000;
+            return;
         } else {
             writeDebugScreen(name_buf, now);
         }
@@ -910,21 +1009,21 @@ void drawImageWithSD(unsigned long now) {
         start_ok = true;
     }
 
-    // // Check if we should display the next frame on this cycle.
+    // Check if we should display the next frame on this cycle.
     if ((now - lastFrameDisplayTime) > currentFrameDelay) {
         if (is_first_frame || !start_ok) {
-            backgroundLayer.fillScreen(COLOR_BLACK);
-            backgroundLayer.swapBuffers();
             int startResult = decoder.startDecoding();
             if(startResult < 0) {
                 Serial.print("GIF SD startDecoding Error: ");
                 Serial.println(startResult);
-                lastFrameDisplayTime = 0;
+                if (my_sd_file) my_sd_file.close();
                 start_ok = false;
+                error_timeout = now + 1000; // Hard wait 1 second
                 return;
             }
         }
         start_ok = true;
+        
         // decode frame without delaying after decode
         int result = decoder.decodeFrame(false);
 
@@ -934,9 +1033,12 @@ void drawImageWithSD(unsigned long now) {
         if(result < 0) {
             Serial.print("GIF SD decodeFrame Error: ");
             Serial.println(result);
-            lastFrameDisplayTime = 0;
-            currentFrameDelay = 0;
+            if (my_sd_file) my_sd_file.close();
             start_ok = false;
+            error_timeout = now + 1000; // Hard wait 1 second
+            return;
+        } else if (result == ERROR_DONE_PARSING) {
+            start_ok = false; // Loop the GIF
         }
     }
 }
@@ -1206,6 +1308,90 @@ void textLoop(unsigned long now) {
     backgroundLayer.swapBuffers();
 }
 
+// --- Layer Mixer Logic ---
+void layerLoop(unsigned long now) {
+    // 1. Draw Background
+    if (layer_bg_idx == 0) { // None
+        backgroundLayer.fillScreen(COLOR_BLACK);
+    } else if (layer_bg_idx == 1) { // Solid Black
+        backgroundLayer.fillScreen(COLOR_BLACK);
+    } else if (layer_bg_idx == 2) { // Solid Red
+        backgroundLayer.fillScreen({255, 0, 0});
+    } else if (layer_bg_idx == 3) { // Plasma
+        visDrawBackground(3, now); // Draws directly to backgroundLayer back-buffer
+    } else if (layer_bg_idx == 4) { // Starfield
+        visDrawBackground(4, now);
+    } else {
+        backgroundLayer.fillScreen(COLOR_BLACK);
+    }
+
+    // 2. Draw Animation Layer
+    if (layer_anim_idx >= 0) {
+        if (layer_anim_idx < 7) {
+            // Generative visualizers expect a fresh screen every frame
+            for (int y = 0; y < 64; y++) {
+                for (int x = 0; x < 64; x++) {
+                    rgb24 tmp = {1, 1, 1};
+                    layer_gif_buffer[y][x] = tmp;
+                }
+            }
+            // Generative Visualizer
+            visDrawAnimation(layer_anim_idx, now);
+        } else {
+            // GIF
+            // Step the GIF decoder (it will write to layer_gif_buffer internally without swapping)
+            if (use_sd) {
+                drawImageWithSD(now);
+            } else {
+                displayGIFFromMemoryById(0, now);
+            }
+        }
+        
+        // Composite the gif_buffer over the background
+        for (int y = 0; y < 64; y++) {
+            for (int x = 0; x < 64; x++) {
+                rgb24 c = layer_gif_buffer[y][x];
+                if (!(c.red == 1 && c.green == 1 && c.blue == 1)) { // If not transparent
+                    backgroundLayer.drawPixel(x, y, c);
+                }
+            }
+        }
+    }
+
+    // 3. Draw Foreground
+    if (layer_fg_idx == 1) { // Border
+        backgroundLayer.drawRectangle(0, 0, 63, 63, COLOR_WHITE);
+        backgroundLayer.drawRectangle(1, 1, 62, 62, COLOR_WHITE);
+    } else if (layer_fg_idx == 2) { // Vignette
+        // Simple vignette: dim the corners
+        for (int y = 0; y < 64; y++) {
+            for (int x = 0; x < 64; x++) {
+                float dx = x - 31.5f;
+                float dy = y - 31.5f;
+                float dist = sqrt(dx*dx + dy*dy);
+                if (dist > 28.0f) {
+                    if (dist > 35.0f) {
+                        backgroundLayer.drawPixel(x, y, COLOR_BLACK);
+                    }
+                }
+            }
+        }
+    }
+
+    // 4. Draw Text Layer
+    if (layer_txt_idx == 1) { // Hello World
+        backgroundLayer.setFont(font3x5);
+        backgroundLayer.drawString(10, 28, COLOR_WHITE, "HELLO");
+        backgroundLayer.drawString(10, 36, COLOR_WHITE, "WORLD");
+    } else if (layer_txt_idx == 2) {
+        backgroundLayer.setFont(font3x5);
+        backgroundLayer.drawString(2, 28, COLOR_WHITE, "BONNAROO");
+    }
+
+    // Finally, swap buffers to push the composited frame to the matrix!
+    backgroundLayer.swapBuffers();
+}
+
 // Setup method runs once, when the sketch starts
 void setup() {
     matrix.setRotation(rotation270);
@@ -1362,6 +1548,11 @@ void loop() {
         visLoop(now);
     } else if (current_mode == MODE_TEXT) {
         textLoop(now);
+    } else if (current_mode == MODE_LAYER) {
+        // Pause layer rendering if uploading to prevent file access collisions
+        if (!is_uploading_ble) {
+            layerLoop(now);
+        }
     } else {
         if (!use_sd) {
             drawImageNoSD(now);

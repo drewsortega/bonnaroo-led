@@ -288,7 +288,7 @@ int GifDecoder<maxGifWidth, maxGifHeight, lzwMaxBits, useMalloc>::startDecoding(
   // file is already open, and we don't know the name, send a 0-length string instead
   if (gif->open("", GIFOpenFile, GIFCloseFile, GIFReadFile, GIFSeekFile, GIFDraw))
   {
-    Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif->getCanvasWidth(), gif->getCanvasHeight());
+    // Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif->getCanvasWidth(), gif->getCanvasHeight());
 #if 0
     GIFINFO gi;
     if (gif->getInfo(&gi)) {
@@ -340,7 +340,7 @@ int GifDecoder<maxGifWidth, maxGifHeight, lzwMaxBits, useMalloc>::startDecoding(
   // file is already open, and we don't know the name, send a 0-length string instead
   if (gif->open(gifPData, gifIDataSize, GIFDraw))
   {
-    Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif->getCanvasWidth(), gif->getCanvasHeight());
+    // Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif->getCanvasWidth(), gif->getCanvasHeight());
 #if 0
     GIFINFO gi;
     if (gif->getInfo(&gi)) {
