@@ -41,6 +41,12 @@ void visInit() {
     current_vis = 0;
 }
 
+void visSetCurrent(int idx) {
+    if (idx >= 0 && idx < NUM_VIS) {
+        current_vis = idx;
+    }
+}
+
 void visHandleInput(int dx, int dy, bool enter) {
     if (dx > 0) {
         current_vis = (current_vis + 1) % NUM_VIS;

@@ -72,11 +72,21 @@ bool isAnimationFile(const char filename []) {
     return true;
 }
 
+const int MAX_GIFS = 256;
+String cached_gif_filenames[MAX_GIFS];
+int cached_gif_count = -1;
+
+void invalidateGIFCache() {
+    cached_gif_count = -1;
+}
+
 // Enumerate and possibly display the animated GIF filenames in GIFS directory
 int enumerateGIFFiles(const char *directoryName, bool displayFilenames) {
+    if (cached_gif_count >= 0) {
+        return cached_gif_count; // Return cached count if valid
+    }
 
     numberOfFiles = 0;
-
     File directory = SD.open(directoryName);
     File file;
 
@@ -86,65 +96,62 @@ int enumerateGIFFiles(const char *directoryName, bool displayFilenames) {
 
     while (file = directory.openNextFile()) {
         if (isAnimationFile(file.name())) {
-            numberOfFiles++;
-            if (displayFilenames) {
-                Serial.print(numberOfFiles);
-                Serial.print(":");
-                Serial.print(file.name());
-                Serial.print("    size:");
-                Serial.println(file.size());
+            if (numberOfFiles < MAX_GIFS) {
+                cached_gif_filenames[numberOfFiles] = file.name();
             }
-        } else if (displayFilenames) {
-            Serial.println(file.name());
+            numberOfFiles++;
         }
-
         file.close();
     }
-
-    //    file.close();
     directory.close();
 
-    return numberOfFiles;
+    // Limit to MAX_GIFS for sorting
+    int sort_count = (numberOfFiles > MAX_GIFS) ? MAX_GIFS : numberOfFiles;
+    
+    // Simple Bubble Sort for alphabetical ordering
+    for (int i = 0; i < sort_count - 1; i++) {
+        for (int j = i + 1; j < sort_count; j++) {
+            if (cached_gif_filenames[i].compareTo(cached_gif_filenames[j]) > 0) {
+                String temp = cached_gif_filenames[i];
+                cached_gif_filenames[i] = cached_gif_filenames[j];
+                cached_gif_filenames[j] = temp;
+            }
+        }
+    }
+    
+    cached_gif_count = sort_count;
+    numberOfFiles = sort_count; // Keep global in sync
+
+    if (displayFilenames) {
+        for (int i = 0; i < cached_gif_count; i++) {
+            Serial.print(i + 1);
+            Serial.print(":");
+            Serial.println(cached_gif_filenames[i]);
+        }
+    }
+
+    return cached_gif_count;
 }
 
 // Get the full path/filename of the GIF file with specified index
 void getGIFFilenameByIndex(const char *directoryName, int index, char *pnBuffer) {
-
-
     // Make sure index is in range
-    if ((index < 0) || (index >= numberOfFiles))
+    if ((index < 0) || (index >= cached_gif_count))
         return;
 
-    File directory = SD.open(directoryName);
-    if (!directory)
-        return;
-
-    while ((index >= 0)) {
-        File entry = directory.openNextFile();
-        if (!entry) break;
-
-        if (isAnimationFile(entry.name())) {
-            index--;
-
-            // Copy the directory name into the pathname buffer			
-            strcpy(pnBuffer, directoryName);
-            
-			//ESP32 SD Library includes the full path name in the filename, so no need to add the directory name
+    // Copy the directory name into the pathname buffer			
+    strcpy(pnBuffer, directoryName);
+    
+    //ESP32 SD Library includes the full path name in the filename, so no need to add the directory name
 #if defined(ESP32)
-            pnBuffer[0] = 0;
+    pnBuffer[0] = 0;
 #else
-            int len = strlen(pnBuffer);
-            if (len == 0 || pnBuffer[len - 1] != '/') strcat(pnBuffer, "/");
+    int len = strlen(pnBuffer);
+    if (len == 0 || pnBuffer[len - 1] != '/') strcat(pnBuffer, "/");
 #endif
 
-            // Append the filename to the pathname
-            strcat(pnBuffer, entry.name());
-        }
-
-        entry.close();
-    }
-
-    directory.close();
+    // Append the sorted filename to the pathname
+    strcat(pnBuffer, cached_gif_filenames[index].c_str());
 }
 
 bool openGifFilenameByIndex(const char *directoryName, int index, char* name_buf) {

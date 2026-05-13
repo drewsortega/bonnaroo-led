@@ -39,7 +39,9 @@
 // Uncomment to use Adafruit Bluefruit LE UART Friend instead of HM-10
 #define USE_ADAFRUIT_BLUEFRUIT
 
-
+// Flow control pins for Adafruit Bluefruit LE UART Friend
+#define BLUEFRUIT_CTS_PIN 22 // Teensy pin pulling Bluefruit CTS to GND
+#define BLUEFRUIT_RTS_PIN 19 // Teensy pin reading Bluefruit RTS (for later use)
 
 #ifdef SIMULATOR_MODE
   #include <GifDecoder.h>
@@ -499,6 +501,8 @@ void HandleBLEInputs(unsigned long now) {
                     is_uploading_ble = false;
                     Serial.println("BLE Upload Complete!");
                     
+                    invalidateGIFCache(); // Refresh the sorted array
+                    
                     indexedLayer.fillScreen(0);
                     indexedLayer.swapBuffers();
                     last_percent = -1;
@@ -553,19 +557,140 @@ void HandleBLEInputs(unsigned long now) {
         }
         
         // Check for PING command to sync baud rate with phone
-        if (ble_buffer.endsWith("*PING*")) {
+        int pingIdx = ble_buffer.lastIndexOf("<PING>");
+        if (pingIdx >= 0) {
             Serial.println("Phone app requested baud rate. Sending...");
-            Serial5.print("*BAUD:");
+            Serial5.print("<BAUD:");
             Serial5.print(current_ble_baud);
-            Serial5.print("*");
+            Serial5.print(">");
             ble_buffer = "";
             continue;
         }
+
+        // Check for GETANIM command
+        int getAnimIdx = ble_buffer.lastIndexOf("<GETANIM>");
+        if (getAnimIdx >= 0) {
+            ble_buffer = ""; // Clear buffer immediately
+            
+            static unsigned long last_getanim_time = 0;
+            if (millis() - last_getanim_time < 5000 && last_getanim_time != 0) {
+                Serial.println("Dropping spam GETANIM request.");
+                continue;
+            }
+            last_getanim_time = millis();
+            
+            Serial.println("Phone app requested Animation list. Pre-computing...");
+            
+            String anim_list = "";
+            const char* const VISUALIZATION_NAMES[] = {
+                "Vis: Plasma", "Vis: Concentric", "Vis: Julia", "Vis: Game of Life",
+                "Vis: Fractal Tunnel", "Vis: Cubic Matrix", "Vis: Gyroid Caverns",
+                "Vis: Serpent Tangle", "Vis: DVD Logo"
+            };
+            const int NUM_VISUALIZATIONS = 9;
+            
+            for (int i = 0; i < NUM_VISUALIZATIONS; i++) {
+                anim_list += String(VISUALIZATION_NAMES[i]);
+                if (i < NUM_VISUALIZATIONS - 1 || use_sd) {
+                    anim_list += ",";
+                }
+            }
+            
+            if (use_sd) {
+                invalidateGIFCache(); // Force a fresh read and sort for the app
+                int total_gifs = enumerateGIFFiles("/gifs", false);
+                for (int i = 0; i < total_gifs; i++) {
+                    char nameBuf[64];
+                    getGIFFilenameByIndex("/gifs", i, nameBuf);
+                    
+                    String fname = String(nameBuf);
+                    if (fname.startsWith("/gifs/")) fname = fname.substring(6);
+                    
+                    anim_list += fname;
+                    if (i < total_gifs - 1) {
+                        anim_list += ",";
+                    }
+                }
+            }
+            
+            int total_size = anim_list.length();
+            Serial.print("Total Animation list size: ");
+            Serial.println(total_size);
+            
+            // Send Header
+            Serial5.print("<ANIM_START:");
+            Serial5.print(total_size);
+            Serial5.print(">");
+            
+            // Allow the BLE module a moment to transmit the header before blasting the payload
+            delay(100); 
+            
+            // Transmit the pre-computed payload in safe BLE-sized chunks (MTU = 20)
+            int bytes_sent = 0;
+            for (int i = 0; i < total_size; i++) {
+                Serial5.print(anim_list[i]);
+                bytes_sent++;
+                
+                if (bytes_sent >= 20) {
+                    delay(20); // Sync exactly with standard BLE MTU packet intervals
+                    bytes_sent = 0;
+                }
+            }
+            
+            // Flush any garbage or queued requests that accumulated during the blocking send
+            while (Serial5.available()) Serial5.read();
+            
+            continue;
+        }
+
+        // Check for SETANIM command
+        int setAnimIdx = ble_buffer.lastIndexOf("<SETANIM:");
+        if (setAnimIdx >= 0) {
+            int endIdx = ble_buffer.indexOf('>', setAnimIdx + 9);
+            if (endIdx > setAnimIdx) {
+                String idxStr = ble_buffer.substring(setAnimIdx + 9, endIdx);
+                int target_idx = idxStr.toInt();
+                Serial.print("Phone requested Animation index: ");
+                Serial.println(target_idx);
+                
+                if (target_idx == -1) {
+                    lbDeactivate();
+                    current_mode = MODE_TEXT;
+                    backgroundLayer.fillScreen(COLOR_BLACK);
+                    backgroundLayer.swapBuffers();
+                    backgroundLayer.fillScreen(COLOR_BLACK);
+                    backgroundLayer.swapBuffers();
+                } else if (target_idx >= 0 && target_idx < 9) {
+                    lbDeactivate();
+                    current_mode = MODE_VISUALIZATIONS;
+                    visSetCurrent(target_idx);
+                    backgroundLayer.fillScreen(COLOR_BLACK);
+                    backgroundLayer.swapBuffers();
+                    backgroundLayer.fillScreen(COLOR_BLACK);
+                    backgroundLayer.swapBuffers();
+                } else if (use_sd) {
+                    int gif_idx = target_idx - 9;
+                    int total_gifs = enumerateGIFFiles("/gifs", false);
+                    if (gif_idx >= 0 && gif_idx < total_gifs) {
+                        lbDeactivate();
+                        current_mode = MODE_GIF;
+                        cur_image_idx = gif_idx;
+                        is_first_frame = true;
+                        backgroundLayer.fillScreen(COLOR_BLACK);
+                        backgroundLayer.swapBuffers();
+                        backgroundLayer.fillScreen(COLOR_BLACK);
+                        backgroundLayer.swapBuffers();
+                    }
+                }
+                ble_buffer = "";
+                continue;
+            }
+        }
         
         // Check for upload command
-        int uIdx = ble_buffer.lastIndexOf("*U:");
+        int uIdx = ble_buffer.lastIndexOf("<U:");
         if (uIdx >= 0) {
-            int endIdx = ble_buffer.indexOf('*', uIdx + 3);
+            int endIdx = ble_buffer.indexOf('>', uIdx + 3);
             if (endIdx > uIdx) {
                 // Found complete command!
                 String cmdStr = ble_buffer.substring(uIdx + 3, endIdx);
@@ -1097,6 +1222,10 @@ void setup() {
     Serial.begin(115200);
 
     // BluetoothLE communication - auto upgrade to 115200
+    pinMode(BLUEFRUIT_CTS_PIN, OUTPUT);
+    digitalWrite(BLUEFRUIT_CTS_PIN, LOW); // Hardwire CTS to GND via pin 22
+    pinMode(BLUEFRUIT_RTS_PIN, INPUT_PULLDOWN); // Read RTS from pin 19, default LOW if unplugged
+
     autoNegotiateBaudRate();
 
     // give time for USB Serial to be ready

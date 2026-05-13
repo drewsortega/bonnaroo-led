@@ -7,8 +7,10 @@
 extern File my_sd_file;
 
 int enumerateGIFFiles(const char *directoryName, bool displayFilenames);
+void invalidateGIFCache();
 void getGIFFilenameByIndex(const char *directoryName, int index, char *pnBuffer);
 bool openGifFilenameByIndex(const char *directoryName, int index, char* name_buf);
+bool isAnimationFile(const char filename[]);
 bool initSDCard(int chipSelectPin, bool use_spi1);
 
 bool fileSeekCallback(unsigned long position);
