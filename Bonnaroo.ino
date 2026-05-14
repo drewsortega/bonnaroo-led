@@ -529,8 +529,6 @@ void HandleBLEInputs(unsigned long now) {
                     is_uploading_ble = false;
                     Serial.println("BLE Upload Complete!");
                     
-                    invalidateGIFCache(); // Refresh the sorted array
-                    
                     indexedLayer.fillScreen(0);
                     indexedLayer.swapBuffers();
                     last_percent = -1;
@@ -545,6 +543,7 @@ void HandleBLEInputs(unsigned long now) {
                     } else {
                         current_mode = MODE_GIF;
                         
+                        invalidateGIFCache(); // Refresh the sorted array
                         // Re-index GIFs
                         num_files = enumerateGIFFiles("/gifs", false);
                         
@@ -777,8 +776,16 @@ void HandleBLEInputs(unsigned long now) {
                         if (layer_anim_idx < 7) {
                             visSetCurrent(layer_anim_idx);
                         } else {
-                            cur_image_idx = layer_anim_idx - 7;
-                            is_first_frame = true;
+                            int total_gifs = enumerateGIFFiles("/gifs", false);
+                            int gif_idx = layer_anim_idx - 7;
+                            if (gif_idx >= 0 && gif_idx < total_gifs) {
+                                cur_image_idx = gif_idx;
+                                is_first_frame = true;
+                            } else {
+                                // Default to 0 if out of bounds to avoid crashes
+                                cur_image_idx = 0;
+                                is_first_frame = true;
+                            }
                         }
                     }
                     
@@ -977,10 +984,17 @@ void drawImageNoSD(unsigned long now) {
 
 void drawImageWithSD(unsigned long now) {
     static unsigned long error_timeout = 0;
+    static bool hard_sd_crash = false;
     if (error_timeout > 0) {
         if (now < error_timeout) return; // Wait until timeout finishes
         error_timeout = 0; // Timeout done, attempt to recover!
         is_first_frame = true;
+        
+        if (hard_sd_crash) {
+            Serial.println("Attempting hard SD restart...");
+            initSDCard(SD_CS, use_spi1);
+            hard_sd_crash = false;
+        }
     }
 
     // For GIFs
@@ -997,6 +1011,7 @@ void drawImageWithSD(unsigned long now) {
             Serial.println("Fail");
             // If we couldn't even open the file, wait 1s before retrying
             error_timeout = now + 1000;
+            hard_sd_crash = true;
             return;
         } else {
             writeDebugScreen(name_buf, now);

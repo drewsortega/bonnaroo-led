@@ -136,8 +136,10 @@ int enumerateGIFFiles(const char *directoryName, bool displayFilenames) {
 // Get the full path/filename of the GIF file with specified index
 void getGIFFilenameByIndex(const char *directoryName, int index, char *pnBuffer) {
     // Make sure index is in range
-    if ((index < 0) || (index >= cached_gif_count))
+    if ((index < 0) || (index >= cached_gif_count)) {
+        pnBuffer[0] = '\0'; // Guarantee it's completely blank instead of undefined garbage memory
         return;
+    }
 
     // Copy the directory name into the pathname buffer			
     strcpy(pnBuffer, directoryName);
