@@ -197,6 +197,16 @@ void updateScreenCallback(void) {
 
 bool vis_drawing_background = false;
 
+void drawStringCallback(int16_t x, int16_t y, const char* str, uint8_t red, uint8_t green, uint8_t blue, int font_idx) {
+    if (current_mode == MODE_LAYER && !vis_drawing_background) {
+        // Fallback for layer mode if needed
+    } else {
+        // Cast the int to the fontChoices enum (0=font3x5, 1=font5x7, 2=font6x10, etc.)
+        backgroundLayer.setFont((fontChoices)font_idx);
+        backgroundLayer.drawString(x, y, {red, green, blue}, str);
+    }
+}
+
 void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue) {
     if (current_mode == MODE_LAYER && !vis_drawing_background) {
         if (x >= 0 && x < 64 && y >= 0 && y < 64) {

@@ -6,6 +6,7 @@
 extern void screenClearCallback(void);
 extern void updateScreenCallback(void);
 extern void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue);
+extern void drawStringCallback(int16_t x, int16_t y, const char* str, uint8_t red, uint8_t green, uint8_t blue, int font_idx);
 
 static const uint8_t font3x5[16][15] = {
     {1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1}, // 0
@@ -394,18 +395,31 @@ void lbLoop(unsigned long now) {
             lb_state_timer = now;
         }
         screenClearCallback();
+        // Title
         lbDrawString(12, 1, "TOP SCORES", 255, 255, 0);
+        
+        // Separator
+        for(int i = 2; i < 62; i+=2) drawPixelCallback(i, 7, 100, 100, 0);
+
+        // Top 5 list (using font5x7 = 1)
         for(int i=0; i<5; i++) {
-            int ry = 8 + i * 11;
-            lbDrawStringScaled(2, ry, lb[i].name, 255, 255, 255, 2);
-            lbDrawNumberScaled(34, ry, lb[i].score, 0, 255, 255, 2);
+            int ry = 13 + i * 8; // 8 pixels per row, shifted down 4 pixels
+            
+            char rankBuf[4];
+            itoa(i+1, rankBuf, 10);
+            drawStringCallback(1, ry, rankBuf, 150, 150, 150, 1);
+            
+            drawStringCallback(10, ry, lb[i].name, 255, 255, 255, 1);
+            
+            char scoreBuf[16];
+            itoa(lb[i].score, scoreBuf, 10);
+            drawStringCallback(36, ry, scoreBuf, 0, 255, 255, 1);
         }
+        
         if (!lb_was_in_top_5) {
-            for(int i=4; i<60; i+=2) {
-                drawPixelCallback(i, 54, 150, 150, 150);
-            }
-            lbDrawString(2, 57, "YOUR SCORE", 255, 0, 0);
-            lbDrawNumber(44, 57, lb_current_score, 0, 255, 255);
+            for(int i = 2; i < 62; i+=2) drawPixelCallback(i, 51, 100, 100, 100);
+            lbDrawString(2, 54, "YOU:", 255, 50, 50);
+            lbDrawNumber(36, 54, lb_current_score, 0, 255, 255);
         }
         updateScreenCallback();
     }
