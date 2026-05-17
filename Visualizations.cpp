@@ -50,10 +50,8 @@ void visSetCurrent(int idx) {
 void visHandleInput(int dx, int dy, bool enter) {
     if (dx > 0) {
         current_vis = (current_vis + 1) % NUM_VIS;
-        if (current_vis == 6 || current_vis == 7) current_vis = 8;
     } else if (dx < 0) {
         current_vis = (current_vis - 1 + NUM_VIS) % NUM_VIS;
-        if (current_vis == 6 || current_vis == 7) current_vis = 5;
     }
 }
 

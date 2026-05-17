@@ -97,6 +97,12 @@ static int layer_bg_idx = -1;
 static int layer_anim_idx = -1;
 static int layer_fg_idx = -1;
 static int layer_txt_idx = -1;
+
+static int layer_bg_bright = 100;
+static int layer_anim_bright = 100;
+static int layer_fg_bright = 100;
+static int layer_txt_bright = 100;
+
 static rgb24 layer_gif_buffer[64][64];
 
 // GIF Bitmaps.
@@ -174,8 +180,8 @@ void screenClearCallback(void) {
   if (current_mode == MODE_LAYER) {
       for (int y = 0; y < 64; y++) {
           for (int x = 0; x < 64; x++) {
-              rgb24 tmp = {1, 1, 1};
-              layer_gif_buffer[y][x] = tmp; // Magic transparent color
+              rgb24 tmp = {0, 0, 0};
+              layer_gif_buffer[y][x] = tmp; // Black is transparent
           }
       }
   } else {
@@ -189,9 +195,10 @@ void updateScreenCallback(void) {
   }
 }
 
+bool vis_drawing_background = false;
+
 void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue) {
-    if (current_mode == MODE_LAYER) {
-        if (red == 1 && green == 1 && blue == 1) red = 2; // Avoid transparent color collision
+    if (current_mode == MODE_LAYER && !vis_drawing_background) {
         if (x >= 0 && x < 64 && y >= 0 && y < 64) {
             rgb24 tmp = {red, green, blue};
             layer_gif_buffer[y][x] = tmp;
@@ -417,6 +424,16 @@ void HandleIRInputs(unsigned long now) {
     }
 
     switch(received_data) {
+        case BUT_BACK:
+        case BUT_SETUP:
+            lbDeactivate();
+            current_mode = MODE_GIF;
+            backgroundLayer.fillScreen(COLOR_BLACK);
+            backgroundLayer.swapBuffers();
+            backgroundLayer.fillScreen(COLOR_BLACK);
+            backgroundLayer.swapBuffers();
+            is_first_frame = true;
+            break;
         case BUT_VOL_DOWN:
             adjustBrightness(-6);
             strcat(debug_buf, "BRT: ");
@@ -738,22 +755,69 @@ void HandleBLEInputs(unsigned long now) {
             int endIdx = ble_buffer.indexOf('>', layerIdx + 7);
             if (endIdx > layerIdx) {
                 String cmdStr = ble_buffer.substring(layerIdx + 7, endIdx);
-                // Expected: bg,anim,fg,txt
+                // Expected: bg,anim,fg,txt,bgbright,animbright,fgbright,txtbright
                 int comma1 = cmdStr.indexOf(',');
                 int comma2 = cmdStr.indexOf(',', comma1 + 1);
                 int comma3 = cmdStr.indexOf(',', comma2 + 1);
+                int comma4 = cmdStr.indexOf(',', comma3 + 1);
+                int comma5 = cmdStr.indexOf(',', comma4 + 1);
+                int comma6 = cmdStr.indexOf(',', comma5 + 1);
+                int comma7 = cmdStr.indexOf(',', comma6 + 1); // just in case
                 
                 if (comma1 > 0 && comma2 > 0 && comma3 > 0) {
                     int bg = cmdStr.substring(0, comma1).toInt();
                     int anim = cmdStr.substring(comma1 + 1, comma2).toInt();
                     int fg = cmdStr.substring(comma2 + 1, comma3).toInt();
-                    int txt = cmdStr.substring(comma3 + 1).toInt();
                     
+                    int txt = 0;
+                    if (comma4 > 0) {
+                        txt = cmdStr.substring(comma3 + 1, comma4).toInt();
+                    } else {
+                        txt = cmdStr.substring(comma3 + 1).toInt();
+                    }
+                    
+                    int bgbright = 100, animbright = 100, fgbright = 100, txtbright = 100;
+                    if (comma4 > 0 && comma5 > 0 && comma6 > 0) {
+                        bgbright = cmdStr.substring(comma4 + 1, comma5).toInt();
+                        animbright = cmdStr.substring(comma5 + 1, comma6).toInt();
+                        if (comma7 > 0) {
+                            fgbright = cmdStr.substring(comma6 + 1, comma7).toInt();
+                            txtbright = cmdStr.substring(comma7 + 1).toInt();
+                        } else {
+                            fgbright = cmdStr.substring(comma6 + 1).toInt();
+                        }
+                    }
+                    
+                    layer_bg_idx = bg;
+                    layer_anim_idx = anim;
+                    
+                    // Force GIF decoder to reload if a GIF is selected on the Animation layer
+                    if (layer_anim_idx >= 7) {
+                        cur_image_idx = layer_anim_idx - 7;
+                        is_first_frame = true; // Invalidate cache so it opens the file
+                    }
+                    
+                    layer_fg_idx = fg;
+                    layer_txt_idx = txt;
+                    
+                    layer_bg_bright = bgbright;
+                    layer_anim_bright = animbright;
+                    layer_fg_bright = fgbright;
+                    layer_txt_bright = txtbright;
                     Serial.print("Phone requested LAYER mix: BG=");
                     Serial.print(bg); Serial.print(" ANIM=");
                     Serial.print(anim); Serial.print(" FG=");
                     Serial.print(fg); Serial.print(" TXT=");
-                    Serial.println(txt);
+                    Serial.print(txt); Serial.print(" Brightness: ");
+                    Serial.print(bgbright); Serial.print(",");
+                    Serial.print(animbright); Serial.print(",");
+                    Serial.print(fgbright); Serial.print(",");
+                    Serial.println(txtbright);
+                    
+                    layer_bg_bright = bgbright;
+                    layer_anim_bright = animbright;
+                    layer_fg_bright = fgbright;
+                    layer_txt_bright = txtbright;
                     
                     lbDeactivate();
                     current_mode = MODE_LAYER;
@@ -763,10 +827,19 @@ void HandleBLEInputs(unsigned long now) {
                     layer_fg_idx = fg;
                     layer_txt_idx = txt;
                     
-                    // Clear the GIF buffer to our magic transparent color
+                    layer_bg_bright = bgbright;
+                    layer_anim_bright = animbright;
+                    layer_fg_bright = fgbright;
+                    layer_txt_bright = txtbright;
+                    
+                    if (layer_txt_idx == 3) {
+                        textInit(use_sd); // Load the txt.bin payload into memory so we can render it
+                    }
+                    
+                    // Clear the GIF buffer to our magic transparent color (Black is transparent)
                     for (int y = 0; y < 64; y++) {
                         for (int x = 0; x < 64; x++) {
-                            rgb24 tmp = {1, 1, 1};
+                            rgb24 tmp = {0, 0, 0};
                             layer_gif_buffer[y][x] = tmp;
                         }
                     }
@@ -1248,19 +1321,23 @@ void textInit(bool sd_available) {
     last_text_draw = 0; // force immediate draw
 }
 
-void textLoop(unsigned long now) {
+void renderTextData(unsigned long now, bool transparent_bg) {
     if (!text_loaded) return;
     
     if (text_scroll_enabled) {
-        if (now - last_text_draw < 40) return; // scroll speed
-        last_text_draw = now;
-        text_scroll_tick++;
+        if (now - last_text_draw >= 40) {
+            last_text_draw = now;
+            text_scroll_tick++;
+        }
     } else {
-        if (now - last_text_draw < 1000) return;
-        last_text_draw = now;
+        if (now - last_text_draw >= 1000) {
+            last_text_draw = now;
+        }
     }
     
-    backgroundLayer.fillScreen(text_bg);
+    if (!transparent_bg) {
+        backgroundLayer.fillScreen(text_bg);
+    }
     
     int charWidth, charHeight;
     const GFXfont* gfxFont = nullptr;
@@ -1302,14 +1379,23 @@ void textLoop(unsigned long now) {
                     
                     if (x > -charWidth && x < 64) {
                         char ch[2] = { text_grid[idx].c, 0 };
-                        if (text_font_id < 6) {
-                            backgroundLayer.drawString(x, r * charHeight, text_grid[idx].color, ch);
-                        } else {
-                            uint16_t c565 = backgroundLayer.color565(text_grid[idx].color.red, text_grid[idx].color.green, text_grid[idx].color.blue);
-                            backgroundLayer.setTextColor(c565);
-                            int yOffset = (text_font_id == 6) ? 13 : (text_font_id == 7) ? 18 : (text_font_id == 8) ? 26 : 35;
-                            backgroundLayer.setCursor(x, r * charHeight + yOffset);
-                            backgroundLayer.print(ch);
+                        if (ch[0] != ' ') { // Only render if it's not a space (vital for transparency overlay)
+                            rgb24 t_color = text_grid[idx].color;
+                            if (layer_txt_bright < 100) {
+                                t_color.red = (t_color.red * layer_txt_bright) / 100;
+                                t_color.green = (t_color.green * layer_txt_bright) / 100;
+                                t_color.blue = (t_color.blue * layer_txt_bright) / 100;
+                            }
+                            
+                            if (text_font_id < 6) {
+                                backgroundLayer.drawString(x, r * charHeight, t_color, ch);
+                            } else {
+                                uint16_t c565 = backgroundLayer.color565(t_color.red, t_color.green, t_color.blue);
+                                backgroundLayer.setTextColor(c565);
+                                int yOffset = (text_font_id == 6) ? 13 : (text_font_id == 7) ? 18 : (text_font_id == 8) ? 26 : 35;
+                                backgroundLayer.setCursor(x, r * charHeight + yOffset);
+                                backgroundLayer.print(ch);
+                            }
                         }
                     }
                 }
@@ -1319,7 +1405,11 @@ void textLoop(unsigned long now) {
             if (idx >= 20000) break;
         }
     }
-    
+}
+
+void textLoop(unsigned long now) {
+    if (!text_loaded) return;
+    renderTextData(now, false);
     backgroundLayer.swapBuffers();
 }
 
@@ -1333,11 +1423,27 @@ void layerLoop(unsigned long now) {
     } else if (layer_bg_idx == 2) { // Solid Red
         backgroundLayer.fillScreen({255, 0, 0});
     } else if (layer_bg_idx == 3) { // Plasma
+        vis_drawing_background = true;
         visDrawBackground(3, now); // Draws directly to backgroundLayer back-buffer
+        vis_drawing_background = false;
     } else if (layer_bg_idx == 4) { // Starfield
+        vis_drawing_background = true;
         visDrawBackground(4, now);
+        vis_drawing_background = false;
     } else {
         backgroundLayer.fillScreen(COLOR_BLACK);
+    }
+    
+    // Apply Background Brightness
+    if (layer_bg_bright < 100) {
+        rgb24 *buffer = backgroundLayer.backBuffer();
+        if (buffer) {
+            for (int i = 0; i < 4096; i++) {
+                buffer[i].red = ((uint32_t)buffer[i].red * layer_bg_bright) / 100;
+                buffer[i].green = ((uint32_t)buffer[i].green * layer_bg_bright) / 100;
+                buffer[i].blue = ((uint32_t)buffer[i].blue * layer_bg_bright) / 100;
+            }
+        }
     }
 
     // 2. Draw Animation Layer
@@ -1346,7 +1452,7 @@ void layerLoop(unsigned long now) {
             // Generative visualizers expect a fresh screen every frame
             for (int y = 0; y < 64; y++) {
                 for (int x = 0; x < 64; x++) {
-                    rgb24 tmp = {1, 1, 1};
+                    rgb24 tmp = {0, 0, 0};
                     layer_gif_buffer[y][x] = tmp;
                 }
             }
@@ -1363,20 +1469,38 @@ void layerLoop(unsigned long now) {
         }
         
         // Composite the gif_buffer over the background
-        for (int y = 0; y < 64; y++) {
-            for (int x = 0; x < 64; x++) {
-                rgb24 c = layer_gif_buffer[y][x];
-                if (!(c.red == 1 && c.green == 1 && c.blue == 1)) { // If not transparent
-                    backgroundLayer.drawPixel(x, y, c);
+        rgb24 *bg_buffer = backgroundLayer.backBuffer();
+        if (bg_buffer) {
+            for (int y = 0; y < 64; y++) {
+                for (int x = 0; x < 64; x++) {
+                    rgb24 c = layer_gif_buffer[y][x];
+                    if (!(c.red == 0 && c.green == 0 && c.blue == 0)) { // If not transparent (Black is transparent)
+                        if (layer_anim_bright < 100) {
+                            c.red = ((uint32_t)c.red * layer_anim_bright) / 100;
+                            c.green = ((uint32_t)c.green * layer_anim_bright) / 100;
+                            c.blue = ((uint32_t)c.blue * layer_anim_bright) / 100;
+                        }
+                        
+                        // Map logical (x, y) to physical rotation270 memory layout
+                        int phys_idx = (63 - x) * 64 + y;
+                        bg_buffer[phys_idx] = c;
+                    }
                 }
             }
         }
     }
 
     // 3. Draw Foreground
+    rgb24 fg_color = COLOR_WHITE;
+    if (layer_fg_bright < 100) {
+        fg_color.red = (fg_color.red * layer_fg_bright) / 100;
+        fg_color.green = (fg_color.green * layer_fg_bright) / 100;
+        fg_color.blue = (fg_color.blue * layer_fg_bright) / 100;
+    }
+    
     if (layer_fg_idx == 1) { // Border
-        backgroundLayer.drawRectangle(0, 0, 63, 63, COLOR_WHITE);
-        backgroundLayer.drawRectangle(1, 1, 62, 62, COLOR_WHITE);
+        backgroundLayer.drawRectangle(0, 0, 63, 63, fg_color);
+        backgroundLayer.drawRectangle(1, 1, 62, 62, fg_color);
     } else if (layer_fg_idx == 2) { // Vignette
         // Simple vignette: dim the corners
         for (int y = 0; y < 64; y++) {
@@ -1387,6 +1511,14 @@ void layerLoop(unsigned long now) {
                 if (dist > 28.0f) {
                     if (dist > 35.0f) {
                         backgroundLayer.drawPixel(x, y, COLOR_BLACK);
+                    } else {
+                        // Blend for smooth vignette
+                        if (layer_fg_bright > 0) {
+                             // Just dimming corners doesn't have a color, it darkens existing pixels.
+                             // But let's scale the darkening effect by brightness? No, vignette is black.
+                             // If fg_bright is 50%, the vignette is only 50% dark?
+                             // Let's just keep vignette simple and draw black if dist > 35.0f.
+                        }
                     }
                 }
             }
@@ -1394,13 +1526,33 @@ void layerLoop(unsigned long now) {
     }
 
     // 4. Draw Text Layer
+    rgb24 txt_color_base = COLOR_WHITE;
+    if (layer_txt_bright < 100) {
+        txt_color_base.red = (txt_color_base.red * layer_txt_bright) / 100;
+        txt_color_base.green = (txt_color_base.green * layer_txt_bright) / 100;
+        txt_color_base.blue = (txt_color_base.blue * layer_txt_bright) / 100;
+    }
+
     if (layer_txt_idx == 1) { // Hello World
-        backgroundLayer.setFont(font3x5);
-        backgroundLayer.drawString(10, 28, COLOR_WHITE, "HELLO");
-        backgroundLayer.drawString(10, 36, COLOR_WHITE, "WORLD");
-    } else if (layer_txt_idx == 2) {
-        backgroundLayer.setFont(font3x5);
-        backgroundLayer.drawString(2, 28, COLOR_WHITE, "BONNAROO");
+        backgroundLayer.setFont(font5x7);
+        rgb24 c = {255, 255, 255};
+        if (layer_txt_bright < 100) {
+            c.red = ((uint32_t)c.red * layer_txt_bright) / 100;
+            c.green = ((uint32_t)c.green * layer_txt_bright) / 100;
+            c.blue = ((uint32_t)c.blue * layer_txt_bright) / 100;
+        }
+        backgroundLayer.drawString(5, 28, c, "Hello World");
+    } else if (layer_txt_idx == 2) { // Bonnaroo
+        backgroundLayer.setFont(font5x7);
+        rgb24 c = {0, 255, 0};
+        if (layer_txt_bright < 100) {
+            c.red = ((uint32_t)c.red * layer_txt_bright) / 100;
+            c.green = ((uint32_t)c.green * layer_txt_bright) / 100;
+            c.blue = ((uint32_t)c.blue * layer_txt_bright) / 100;
+        }
+        backgroundLayer.drawString(10, 28, c, "Bonnaroo");
+    } else if (layer_txt_idx == 3) { // Custom User Text Payload
+        renderTextData(now, true);
     }
 
     // Finally, swap buffers to push the composited frame to the matrix!
